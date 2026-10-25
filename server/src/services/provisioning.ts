@@ -460,18 +460,43 @@ export function createProvisioning(db: Db, cfg: Config, sealer: Sealer, template
     });
   }
 
-  /** Marks stale prepared jobs as expired and applies GDPR retention. */
+  /**
+   * How long the activity log and the operational records are kept, in days: the months of the
+   * privacy notice the users accepted (Informativa privacy), else Impostazioni server → Conservazione
+   * dello storico e del registro. One rule, the one the notice promises (security report 25/10/2026, P01).
+   */
+  function retentionDays(): number {
+    const row = db.prepare("SELECT value FROM settings WHERE key = 'privacy.controller'").get() as { value: string } | undefined;
+    const months = (() => {
+      try {
+        return Number((JSON.parse(row?.value ?? '{}') as { retentionMonths?: number }).retentionMonths) || 0;
+      } catch {
+        return 0;
+      }
+    })();
+    return months > 0 ? Math.round(months * 30.44) : cfg.auditRetentionDays;
+  }
+
+  /**
+   * Marks stale prepared jobs as expired and applies the retention. A written installation (success)
+   * is the record of a customer's CPE and stays, with its acceptance test, photos and speed tests,
+   * for the duration of the service as the privacy notice says: only the attempts that never installed
+   * a CPE (prepared, failed, expired) and the logs go after [retentionDays].
+   */
   function housekeeping() {
     const now = nowIso();
     // Results may arrive after expiry (offline field work), so keep a grace period before marking.
     const grace = new Date(Date.now() - 7 * 86400_000).toISOString();
     db.prepare("UPDATE provisioning_jobs SET status = 'expired' WHERE status = 'prepared' AND expires_at < ?").run(grace);
-    const cutoff = new Date(Date.now() - cfg.auditRetentionDays * 86400_000).toISOString();
-    db.prepare('DELETE FROM provisioning_jobs WHERE created_at < ?').run(cutoff);
+    const cutoff = new Date(Date.now() - retentionDays() * 86400_000).toISOString();
+    db.prepare("DELETE FROM provisioning_jobs WHERE created_at < ? AND status <> 'success'").run(cutoff);
     db.prepare('DELETE FROM audits WHERE created_at < ?').run(cutoff);
     db.prepare('DELETE FROM events WHERE created_at < ?').run(cutoff);
     db.prepare('DELETE FROM install_ko WHERE created_at < ?').run(cutoff);
-    db.prepare('DELETE FROM speed_tests WHERE created_at < ?').run(cutoff);
+    // the speed tests of an installation's acceptance test are part of it; the others are logs
+    db.prepare(
+      "DELETE FROM speed_tests WHERE created_at < ? AND (job_id IS NULL OR job_id NOT IN (SELECT id FROM provisioning_jobs WHERE status = 'success'))",
+    ).run(cutoff);
     sweepPhotos(db, cfg.photosDir);
     return now;
   }

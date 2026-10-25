@@ -143,6 +143,7 @@ export const SERVER_SETTINGS: Def[] = [
   },
   {
     key: 'auditRetentionDays', env: 'GDPR_AUDIT_RETENTION_DAYS', group: 'Provisioning e app', label: 'Conservazione dello storico e del registro (giorni)', kind: 'int', min: 1, max: 3650,
+    help: "Vale solo se l'informativa privacy non indica i mesi: altrimenti conta quella. Le installazioni riuscite, con collaudi e foto, restano comunque.",
     get: (c) => c.auditRetentionDays, set: (c, v) => (c.auditRetentionDays = v as number),
   },
   {
