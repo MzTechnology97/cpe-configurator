@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { todayRome } from './work-orders.ts';
 import { HttpError, createLoginLimiter } from '../auth.ts';
 import type { AppContext } from '../context.ts';
-import { hashPassword, sha256Hex, verifyPassword } from '../crypto.ts';
+import { hashPassword, verifyPassword } from '../crypto.ts';
 import { nowIso, recordEvent } from '../db.ts';
 import { applyForm, formFieldsView, policyWarnings, readForm, skeletonFor, templateFacts } from '../domain/airos-form.ts';
 import { autoTemplate } from '../domain/autotemplate.ts';

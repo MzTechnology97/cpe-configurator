@@ -19,7 +19,7 @@ import {
 import { loadLatestRelease } from '../services/releases.ts';
 import { escapeHtml } from '../services/telegram.ts';
 import { checkSecondFactor as sharedSecondFactor } from '../services/second-factor.ts';
-import { hashRecovery, looksLikeRecoveryCode, newRecoveryCodes, newSecret, otpauthUrl, verifyCode } from '../domain/totp.ts';
+import { newRecoveryCodes, newSecret, otpauthUrl, verifyCode } from '../domain/totp.ts';
 
 const loginSchema = z.object({
   username: z.string().trim().min(1).max(80),

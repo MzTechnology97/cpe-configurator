@@ -2,6 +2,7 @@ package it.cdanet.cpeconfigurator.specialist
 
 import it.cdanet.cpeconfigurator.data.ApiClient
 import it.cdanet.cpeconfigurator.data.ApiException
+import it.cdanet.cpeconfigurator.data.retryLater
 import it.cdanet.cpeconfigurator.data.AppJson
 import it.cdanet.cpeconfigurator.data.CpeIdDto
 import it.cdanet.cpeconfigurator.data.CpeLocation
@@ -331,10 +332,10 @@ class SpecialistResults(private val store: SecureStore?, private val api: ApiCli
     }
 
     suspend fun enqueue(item: SpecPendingResult) = mutex.withLock {
-        persist((_pending.value.filterNot { it.jobId == item.jobId } + item).takeLast(100))
+        persist(_pending.value.filterNot { it.jobId == item.jobId } + item)
     }
 
-    /** Sends what is waiting; keeps what failed for the network (401, 429, 5xx too). Returns how many went. */
+    /** Sends what is waiting; keeps what can go later ([retryLater], the network too). Returns how many went. */
     suspend fun sync(): Int = mutex.withLock {
         if (session.token == null || _pending.value.isEmpty()) return@withLock 0
         var sent = 0
@@ -346,7 +347,7 @@ class SpecialistResults(private val store: SecureStore?, private val api: ApiCli
                 sent++
             } catch (e: ApiException) {
                 when {
-                    e.status == 401 || e.status == 429 || e.status >= 500 -> left += item
+                    e.retryLater -> left += item
                     // already recorded with the same outcome: nothing to send
                     e.status == 409 -> Unit
                     else -> rejected += "Esito di ${item.label} rifiutato dal server: ${e.message ?: e.code}"
