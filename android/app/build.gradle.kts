@@ -29,7 +29,8 @@ android {
 
     // «server»: the APK the server hands out and updates by itself (as so far). «play»: the bundle
     // for Google Play, which installs and updates it (no "install unknown apps" permission).
-    // Same package and same key: one replaces the other in place.
+    // Play has its own package, the one the Play Console registered (com.cdanet.app): for Android
+    // they are two apps, which can sit side by side on a phone while technicians move over.
     flavorDimensions += "store"
     productFlavors {
         create("server") {
@@ -39,6 +40,7 @@ android {
         }
         create("play") {
             dimension = "store"
+            applicationId = "com.cdanet.app"
             buildConfigField("String", "STORE", "\"play\"")
         }
     }

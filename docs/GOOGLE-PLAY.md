@@ -1,13 +1,20 @@
 # App su Google Play (distribuzione privata)
 
-L'app esce in due varianti, stesso pacchetto (`it.cdanet.cpeconfigurator`) e stessa chiave di firma:
+L'app esce in due varianti, con lo stesso codice:
 
-| Variante | Comando | Chi la installa e la aggiorna |
-|---|---|---|
-| `server` | `assembleServerRelease` → APK | il server (`/api/mobile/apk`): l'app scarica e installa da sé, come finora |
-| `play` | `bundlePlayRelease` → AAB | Google Play: niente permesso «Installa app sconosciute», gli aggiornamenti arrivano dal Play Store |
+| Variante | Pacchetto | Comando | Chi la installa e la aggiorna |
+|---|---|---|---|
+| `server` | `it.cdanet.cpeconfigurator` | `assembleServerRelease` → APK | il server (`/api/mobile/apk`): l'app scarica e installa da sé, come finora |
+| `play` | `com.cdanet.app` | `bundlePlayRelease` → AAB | Google Play: niente permesso «Installa app sconosciute», gli aggiornamenti arrivano dal Play Store |
 
-Con la stessa chiave le due varianti si sostituiscono a vicenda: chi ha l'APK del server può passare al Play Store senza disinstallare.
+Il pacchetto della variante `play` è quello registrato nella Play Console (v1.36.22). Per Android sono quindi **due app diverse**, che possono stare insieme sullo stesso telefono.
+
+Per passare un tecnico al Play Store:
+1. installa l'app dal Play Store e fa l'accesso;
+2. nell'app del server invia tutto quello che è in coda (esiti, collaudi, foto), con Internet attivo;
+3. solo dopo disinstalla l'app del server.
+
+Le notifiche push con Firebase richiedono anche l'app `com.cdanet.app` nel progetto Firebase (`google-services.json` aggiornato in console). Senza, l'app di Play riceve le notifiche del NOC con la connessione propria, come quando Firebase non c'è.
 
 La distribuzione è **privata**: il canale **Test interno** di Google Play (fino a 100 tester, elencati per account Google). Non c'è revisione pubblica e l'app non compare nelle ricerche. Solo chi è in elenco e ha aperto il link di adesione la vede e la installa.
 
@@ -48,7 +55,7 @@ Nell'app installata da Play:
    - lingua italiano;
    - App, Gratuita;
    - le due dichiarazioni (norme e leggi USA sull'esportazione).
-2. **Firma dell'app**: si usa la **chiave esistente**. Con l'opzione «Esporta e carica una chiave da un archivio Java» e lo strumento PEPK, la cifra chi ha il keystore. Il keystore non va mai inviato a nessuno. Così le installazioni attuali si aggiornano senza disinstallare.
+2. **Firma dell'app**: va bene la chiave **generata da Google** (scelta predefinita). L'app di Play è un'app nuova, quindi non deve aggiornare le installazioni del server. Il bundle della CI è firmato con il keystore di CDA Net, che diventa la chiave di caricamento. Il keystore non va mai inviato a nessuno.
 3. **Contenuti dell'app** (Norme → Contenuti dell'app):
    - **Norme sulla privacy**: `https://app.cda-net.it/privacy`. È l'informativa compilata in console (Informativa privacy), pubblicata senza accesso.
    - **Accesso all'app**: l'app richiede l'accesso, quindi va creato in console un utente di prova (installatore, nessun dato reale). Le sue credenziali si scrivono solo nella Play Console, mai in chat.
