@@ -1,6 +1,6 @@
-# CDA Net CPE Configurator · v1
+# CPE Configurator · v1
 
-Piattaforma CDA Net (AS200034) per installare, collaudare e seguire le CPE Ubiquiti airMAX AC dei clienti: provisioning, strumenti di campo, NOC, copertura e monitoraggio della rete.
+Piattaforma per installare, collaudare e seguire le CPE Ubiquiti airMAX AC dei clienti: provisioning, strumenti di campo, NOC, copertura e monitoraggio della rete.
 
 | Componente | Cartella | Ruolo |
 |---|---|---|
