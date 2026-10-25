@@ -8,7 +8,7 @@ import { createSign } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 
 const [file, name = ''] = process.argv.slice(2);
-const pkg = process.env.PLAY_PACKAGE || 'it.cdanet.cpeconfigurator';
+const pkg = process.env.PLAY_PACKAGE || 'com.cdanet.app';
 const track = process.env.PLAY_TRACK || 'internal';
 // «draft» until the app's first release has been rolled out from the Play Console
 const status = process.env.PLAY_RELEASE_STATUS || 'completed';
