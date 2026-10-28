@@ -16,12 +16,12 @@ val keystorePath: String? = System.getenv("ANDROID_KEYSTORE_PATH")
 
 android {
     namespace = "it.cdanet.cpeconfigurator"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "it.cdanet.cpeconfigurator"
         minSdk = 26
-        targetSdk = 35
+        targetSdk = 36
         versionCode = appVersionCode
         versionName = appVersion
         buildConfigField("String", "DEFAULT_BACKEND_URL", "\"${System.getenv("CDA_DEFAULT_BACKEND") ?: "https://app.cda-net.it"}\"")
