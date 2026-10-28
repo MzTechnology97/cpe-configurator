@@ -21,6 +21,12 @@ import it.cdanet.cpeconfigurator.network.TestTls
 
 class ApiException(val status: Int, val code: String, message: String) : IOException(message)
 
+/**
+ * A refusal a later attempt gets past (session, rate limit, server, mandatory update, address blocked
+ * by the server's protection): queued work waits for it instead of being given up (report F02).
+ */
+val ApiException.retryLater: Boolean get() = status == 401 || status == 426 || status == 429 || status >= 500 || code == "blocked_ip"
+
 val AppJson = Json {
     ignoreUnknownKeys = true
     explicitNulls = false

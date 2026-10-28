@@ -963,6 +963,19 @@ export function migrate(db: Db, target = MIGRATIONS.length): void {
 
 export const nowIso = () => new Date().toISOString();
 
+/** All the writes of [fn] or none of them. */
+export function transaction<T>(db: Db, fn: () => T): T {
+  db.exec('BEGIN');
+  try {
+    const out = fn();
+    db.exec('COMMIT');
+    return out;
+  } catch (e) {
+    db.exec('ROLLBACK');
+    throw e;
+  }
+}
+
 export function recordEvent(db: Db, userId: number | null, action: string, target = '', detail = ''): void {
   db.prepare('INSERT INTO events(created_at, user_id, action, target, detail) VALUES(?,?,?,?,?)').run(
     nowIso(),

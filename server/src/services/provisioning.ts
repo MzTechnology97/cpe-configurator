@@ -4,7 +4,7 @@ import { HttpError } from '../auth.ts';
 import { seesAll } from '../domain/roles.ts';
 import type { Config } from '../config.ts';
 import { md5Crypt, sha256Hex, type Sealer } from '../crypto.ts';
-import { nowIso, type Db } from '../db.ts';
+import { nowIso, transaction, type Db } from '../db.ts';
 import { isDeviceMac,
   MANAGEMENT_PORTS,
   PPPOE_USER_RX,
@@ -341,7 +341,15 @@ export function createProvisioning(db: Db, cfg: Config, sealer: Sealer, template
     };
   }
 
+  /**
+   * The result, the work order it closes and the RMA of a replacement: all of it or nothing (report
+   * 25/10/2026, F01), so a write that fails halfway is retried whole by the app's queue.
+   */
   function recordResult(jobId: string, user: { id: number; role: string }, input: z.infer<typeof provisionResultSchema>) {
+    return transaction(db, () => writeResult(jobId, user, input));
+  }
+
+  function writeResult(jobId: string, user: { id: number; role: string }, input: z.infer<typeof provisionResultSchema>) {
     const job = db.prepare('SELECT id, user_id, status, mac, ssid, ssid_options FROM provisioning_jobs WHERE id = ?').get(jobId) as
       | { id: string; user_id: number; status: string; mac: string; ssid: string; ssid_options: string | null }
       | undefined;
@@ -362,8 +370,9 @@ export function createProvisioning(db: Db, cfg: Config, sealer: Sealer, template
     // A failed write can be retried with the same package (new attempt); a success is final.
     const retry = job.status === 'failed';
     if (job.status === 'success') {
-      if (input.result === 'success') return { ok: true, duplicate: true };
-      throw new HttpError(409, 'job_already_completed');
+      if (input.result !== 'success') throw new HttpError(409, 'job_already_completed');
+      closeInstalled(jobId, job.user_id); // idempotent: mends what an older version left half done
+      return { ok: true, duplicate: true };
     }
     if (retry && input.completedAt && sameAttempt(jobId, input.completedAt)) return { ok: true, duplicate: true };
     db.prepare(
@@ -376,22 +385,24 @@ export function createProvisioning(db: Db, cfg: Config, sealer: Sealer, template
       sanitizeError(input.error),
       jobId,
     );
-    // a work order closes with the successful installation that came from it
-    if (input.result === 'success') {
-      db.prepare(
-        "UPDATE work_orders SET status = 'done', done_at = ?, job_id = ?, updated_at = ? WHERE id = (SELECT work_order_id FROM provisioning_jobs WHERE id = ?) AND status <> 'cancelled'",
-      ).run(nowIso(), jobId, nowIso(), jobId);
-      // a replacement: the CPE taken off goes back to the warehouse (RMA), once per old installation
-      const old = db
-        .prepare('SELECT o.id, o.mac, o.model, o.device_name name FROM provisioning_jobs n JOIN provisioning_jobs o ON o.id = n.replaces_job_id WHERE n.id = ?')
-        .get(jobId) as { id: string; mac: string; model: string; name: string } | undefined;
-      if (old?.mac) {
-        db.prepare(
-          `INSERT OR IGNORE INTO cpe_rma(created_at, removed_job_id, replaced_by_job_id, mac, model, customer, removed_by, updated_at, updated_by) VALUES(?,?,?,?,?,?,?,?,?)`,
-        ).run(nowIso(), old.id, jobId, old.mac, old.model, old.name, job.user_id, nowIso(), job.user_id);
-      }
-    }
+    if (input.result === 'success') closeInstalled(jobId, job.user_id);
     return { ok: true, duplicate: false, ...(retry ? { retry: true } : {}) };
+  }
+
+  function closeInstalled(jobId: string, installerId: number) {
+    // a work order closes with the successful installation that came from it
+    db.prepare(
+      "UPDATE work_orders SET status = 'done', done_at = ?, job_id = ?, updated_at = ? WHERE id = (SELECT work_order_id FROM provisioning_jobs WHERE id = ?) AND status NOT IN ('cancelled', 'done')",
+    ).run(nowIso(), jobId, nowIso(), jobId);
+    // a replacement: the CPE taken off goes back to the warehouse (RMA), once per old installation
+    const old = db
+      .prepare('SELECT o.id, o.mac, o.model, o.device_name name FROM provisioning_jobs n JOIN provisioning_jobs o ON o.id = n.replaces_job_id WHERE n.id = ?')
+      .get(jobId) as { id: string; mac: string; model: string; name: string } | undefined;
+    if (old?.mac) {
+      db.prepare(
+        `INSERT OR IGNORE INTO cpe_rma(created_at, removed_job_id, replaced_by_job_id, mac, model, customer, removed_by, updated_at, updated_by) VALUES(?,?,?,?,?,?,?,?,?)`,
+      ).run(nowIso(), old.id, jobId, old.mac, old.model, old.name, installerId, nowIso(), installerId);
+    }
   }
 
   /** The offline queue may send the same result twice: same completion time, same attempt. */

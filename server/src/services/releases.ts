@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { createReadStream, existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import { basename, join } from 'node:path';
 import { z } from 'zod';
 
@@ -31,16 +31,6 @@ export function loadLatestRelease(dir: string): (ReleaseMeta & { apkPath: string
   } catch {
     return null;
   }
-}
-
-export function sha256File(path: string): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const h = createHash('sha256');
-    createReadStream(path)
-      .on('data', (c) => h.update(c))
-      .on('error', reject)
-      .on('end', () => resolve(h.digest('hex')));
-  });
 }
 
 interface GithubAsset {
@@ -90,7 +80,9 @@ export async function syncFromGithub(opts: SyncOptions): Promise<'updated' | 'cu
   if (!metaAsset) return 'no-release';
   const meta = releaseMetaSchema.parse(JSON.parse((await download(metaAsset)).toString('utf8')));
   const current = loadLatestRelease(opts.dir);
-  if (current && current.versionCode >= meta.versionCode && current.sha256.toLowerCase() === meta.sha256.toLowerCase()) {
+  // never back to an older version (an Android app cannot downgrade anyway); the same version
+  // with another hash is a rebuild of it and is taken
+  if (current && (current.versionCode > meta.versionCode || (current.versionCode === meta.versionCode && current.sha256.toLowerCase() === meta.sha256.toLowerCase()))) {
     return 'current';
   }
   const apkAsset = assets.find((a) => a.name === meta.fileName);
