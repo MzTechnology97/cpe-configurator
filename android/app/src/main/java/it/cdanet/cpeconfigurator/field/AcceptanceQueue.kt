@@ -3,6 +3,7 @@ package it.cdanet.cpeconfigurator.field
 import android.content.Context
 import it.cdanet.cpeconfigurator.data.ApiClient
 import it.cdanet.cpeconfigurator.data.ApiException
+import it.cdanet.cpeconfigurator.data.retryLater
 import it.cdanet.cpeconfigurator.data.AppJson
 import it.cdanet.cpeconfigurator.data.ResultQueue
 import it.cdanet.cpeconfigurator.data.Session
@@ -97,14 +98,14 @@ class AcceptanceQueue(
                     try {
                         api.putAcceptance(item.jobId, report)
                     } catch (e: ApiException) {
-                        // 409 = result still queued, 401/429/5xx = retry later; other 4xx can never succeed.
-                        if (e.status == 409 || e.status == 401 || e.status == 429 || e.status >= 500) throw e
+                        // 409 = result still queued, or [retryLater]: later; other 4xx can never succeed.
+                        if (e.status == 409 || e.retryLater) throw e
                         try {
                             // a server older than the app does not know the new fields yet: height in the notes
                             if (e.status != 400 || (report.cpeHeightM == null && report.position == null)) throw e
                             api.putAcceptance(item.jobId, forOlderServer(report))
                         } catch (e2: ApiException) {
-                            if (e2.status == 409 || e2.status == 401 || e2.status == 429 || e2.status >= 500) throw e2
+                            if (e2.status == 409 || e2.retryLater) throw e2
                             _rejected.value = _rejected.value + (item.jobId to (e2.message ?: e2.code))
                         }
                     }
@@ -123,7 +124,7 @@ class AcceptanceQueue(
                                 continue
                             }
                             // 409 = job result still queued: retry later, like the report (not the photo limit: never accepted)
-                            if ((e.status == 409 && e.code != "too_many_photos") || e.status == 401 || e.status == 429 || e.status >= 500) throw e
+                            if ((e.status == 409 && e.code != "too_many_photos") || e.retryLater) throw e
                             // refused for good (too big, not a JPEG…): say so instead of losing it silently
                             val why = "foto «${p.caption}» non accettata (${e.message ?: e.code})"
                             _rejected.value = _rejected.value + (item.jobId to listOfNotNull(_rejected.value[item.jobId], why).joinToString("; "))

@@ -7,7 +7,7 @@ import type { AppContext } from '../context.ts';
 import { nowIso, recordEvent } from '../db.ts';
 import { approxPoint, roughDistance } from '../domain/approx.ts';
 import { distanceM, isValidLatLon } from '../domain/geo.ts';
-import { lineOfSight, pathPoints, resolveApAltitude } from '../domain/los.ts';
+import { lineOfSight, resolveApAltitude } from '../domain/los.ts';
 import { linkSignalDbm, MAX_LINK_M, rankCoverage, VIEW_MAX_KM, type ApModel } from '../domain/coverage-model.ts';
 import { failuresNear, fieldFailures } from '../services/field-samples.ts';
 import { buildLinkProfile, buildProfile, estimateForAp, obstacles, pointingConfig, profileEffect, terrainSampler } from '../services/terrain.ts';

@@ -3,6 +3,7 @@ package it.cdanet.cpeconfigurator.field
 import android.content.Context
 import it.cdanet.cpeconfigurator.data.ApiClient
 import it.cdanet.cpeconfigurator.data.ApiException
+import it.cdanet.cpeconfigurator.data.retryLater
 import it.cdanet.cpeconfigurator.data.AppJson
 import it.cdanet.cpeconfigurator.data.ResultQueue
 import it.cdanet.cpeconfigurator.data.Session
@@ -65,7 +66,7 @@ class RmaQueue(
                 done++
             } catch (e: ApiException) {
                 // the replacement's result has not reached the server yet: later; otherwise it can never be accepted
-                if (e.status == 401 || e.status == 429 || e.status >= 500 || (e.status == 404 && a.jobId in queuedResults)) left += a
+                if (e.retryLater || (e.status == 404 && a.jobId in queuedResults)) left += a
             } catch (_: Exception) {
                 left += a
             }

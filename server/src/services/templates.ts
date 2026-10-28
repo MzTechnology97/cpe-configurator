@@ -1,7 +1,7 @@
 import { HttpError } from '../auth.ts';
 import { doesCdaWork, seesAll } from '../domain/roles.ts';
 import { sha256Hex, type Sealer } from '../crypto.ts';
-import { nowIso, type Db } from '../db.ts';
+import { nowIso, transaction, type Db } from '../db.ts';
 import { templateFacts, type TemplateParams } from '../domain/airos-form.ts';
 import { TARGET_FIRMWARE, type CpeModel } from '../domain/policy.ts';
 import { inspectTemplate, normalizeTemplate, RETIRED_PLACEHOLDERS, type RetiredPlaceholder } from '../domain/systemcfg.ts';
@@ -176,17 +176,7 @@ export function createTemplates(db: Db, sealer: Sealer) {
     if (!r) throw new HttpError(404, 'template_not_found');
     return r;
   };
-  const tx = <T>(fn: () => T): T => {
-    db.exec('BEGIN');
-    try {
-      const out = fn();
-      db.exec('COMMIT');
-      return out;
-    } catch (e) {
-      db.exec('ROLLBACK');
-      throw e;
-    }
-  };
+  const tx = <T>(fn: () => T): T => transaction(db, fn);
   /** Keeps exactly one public global default per model when a public template exists. */
   const ensureDefault = (model: string) => {
     db.prepare("UPDATE profile_templates SET is_default = 0 WHERE model = ? AND firmware = ? AND audience <> 'all'").run(model, TARGET_FIRMWARE);

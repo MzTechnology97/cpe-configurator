@@ -32,9 +32,11 @@ class OfflineLog(private val store: SecureStore) {
         if (list.isEmpty()) return
         runCatching { api.offlineEvents(list) }.onSuccess {
             synchronized(this) {
-                // what was recorded while sending stays for the next time
-                val now = read()
-                if (now.size <= list.size) store.remove(NAME) else store.put(NAME, AppJson.encodeToString(serializer, now.drop(list.size)))
+                // what was recorded while sending stays for the next time (with a full log the oldest
+                // entries roll off, so the count sent says nothing about which ones are left)
+                val sent = list.toSet()
+                val rest = read().filterNot { it in sent }
+                if (rest.isEmpty()) store.remove(NAME) else store.put(NAME, AppJson.encodeToString(serializer, rest))
             }
         }
     }
