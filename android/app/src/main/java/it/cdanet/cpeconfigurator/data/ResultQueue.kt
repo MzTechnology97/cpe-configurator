@@ -57,11 +57,11 @@ class ResultQueue(
 
     suspend fun enqueue(item: PendingResult) = mutex.withLock {
         if (_rejected.value.any { it.jobId == item.jobId }) saveRejected(_rejected.value.filterNot { it.jobId == item.jobId })
-        save((_pending.value.filterNot { it.jobId == item.jobId } + item).takeLast(200))
+        save(_pending.value.filterNot { it.jobId == item.jobId } + item)
     }
 
     /**
-     * Sends queued results; keeps the ones that fail for network reasons (401, 429, 5xx too).
+     * Sends queued results; keeps the ones that can go later ([retryLater], the network too).
      * 409 = the job is already completed: nothing to send. Other 4xx can never succeed: they are
      * kept in [rejected] with the reason, never dropped silently.
      */
@@ -76,7 +76,7 @@ class ResultQueue(
                 sent++
             } catch (e: ApiException) {
                 when {
-                    e.status == 401 || e.status == 429 || e.status >= 500 -> left += item
+                    e.retryLater -> left += item
                     e.status == 409 -> {}
                     else -> refused += RejectedResult(item.jobId, item.label, e.message ?: "errore ${e.status}")
                 }

@@ -205,17 +205,6 @@ export function createSpecialist(
    */
   const sharedOk = (userId: number, r: TemplateRow) => r.user_id === userId || r.cda_source_id == null || (opts.canUseCda?.(userId, r.cda_source_id) ?? false);
   const inList = (ids: number[]) => ids.map(() => '?').join(',');
-  const tx = <T>(fn: () => T): T => {
-    db.exec('BEGIN');
-    try {
-      const out = fn();
-      db.exec('COMMIT');
-      return out;
-    } catch (e) {
-      db.exec('ROLLBACK');
-      throw e;
-    }
-  };
 
   // ---- templates -------------------------------------------------------------------------------
   /** The secrets of a template, sealed apart from its text and never returned: its author's (issue #275). */

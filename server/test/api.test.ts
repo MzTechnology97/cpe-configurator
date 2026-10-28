@@ -269,5 +269,10 @@ describe('GitHub release sync', () => {
     const meta2 = { ...meta, versionCode: 10003 };
     const bad2 = (async (url: string) => (url.endsWith('/meta') ? new Response(JSON.stringify(meta2)) : bad(url))) as typeof fetch;
     await assert.rejects(syncFromGithub({ ...opts, fetchImpl: bad2 }), /sha256_mismatch/);
+
+    // an older release on GitHub (another hash) never replaces the newer one already published
+    const older = { ...meta, versionCode: 10001, sha256: 'a'.repeat(64) };
+    const back = (async (url: string) => (url.endsWith('/meta') ? new Response(JSON.stringify(older)) : fakeFetch(url))) as typeof fetch;
+    assert.equal(await syncFromGithub({ ...opts, fetchImpl: back }), 'current');
   });
 });
