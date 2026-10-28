@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { SignJWT, jwtVerify } from 'jose';
+import { verifyPassword } from './crypto.ts';
 import { nowIso, type Db } from './db.ts';
 import { doesCdaWork, isStaff, seesAll, type Role } from './domain/roles.ts';
 
@@ -264,5 +265,23 @@ export function createLoginLimiter(maxAttempts = 10, windowMs = 10 * 60_000) {
     clear(ip: string, username: string): void {
       attempts.delete(key(ip, username));
     },
+  };
+}
+
+/**
+ * The admin's own password again before handing out the master key (backup, NAS): a session taken
+ * from someone is not enough (report 25/10/2026, S05). Wrong or missing: 403, five tries.
+ */
+export function createPasswordConfirm(db: Db) {
+  const limiter = createLoginLimiter(5);
+  const row = db.prepare('SELECT username, password_hash FROM users WHERE id = ?');
+  return (ip: string, userId: number, password: string | undefined) => {
+    const me = row.get(userId) as { username: string; password_hash: string };
+    if (limiter.blocked(ip, me.username)) throw new HttpError(429, 'too_many_attempts');
+    if (!password || !verifyPassword(password, me.password_hash)) {
+      limiter.fail(ip, me.username);
+      throw new HttpError(403, 'wrong_current_password');
+    }
+    limiter.clear(ip, me.username);
   };
 }

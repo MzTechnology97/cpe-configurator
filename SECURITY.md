@@ -25,7 +25,7 @@ Piattaforma interna CDA Net: la usano solo il personale autorizzato e gli Specia
 | Token di sessione | in memoria (app), `sessionStorage` o `localStorage` con «Resta connesso» (console) | — |
 | Sessione senza Internet, credenziali CPE, configurazioni pronte offline | telefono, cifrate con il Keystore di Android | solo l'app, fino alla scadenza |
 | Chiave del telefono (accesso rapido), token MCP | DB solo come hash SHA-256 | — |
-| Backup cifrati del database | copia scaricata o NAS, cifrata con la password del backup (scrypt + AES-256-GCM) | chi ha la password |
+| Backup cifrati del database | copia scaricata o NAS, cifrata con la password del backup (scrypt + AES-256-GCM); con la chiave principale solo dopo la password dell'amministratore | chi ha la password |
 | Keystore Android | GitHub Secrets + copia offline | CI |
 
 Lo storico (`provisioning_jobs`, `events`) contiene solo metadati: utente RADIUS, MAC, seriale, SSID, modello, fasi ed errori sanificati. Mai password, PSK o configurazioni.

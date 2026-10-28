@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
-import { HttpError } from '../auth.ts';
+import { HttpError, createPasswordConfirm } from '../auth.ts';
 import type { AppContext } from '../context.ts';
 import { recordEvent } from '../db.ts';
 
@@ -17,14 +17,16 @@ export function platformRoutes(app: FastifyInstance, ctx: AppContext) {
   const admin = { preHandler: ctx.auth.requireAdmin };
   // the specialist sees how the platform is doing; the backups stay with the admins
   const staff = { preHandler: ctx.auth.requireSeesAll };
+  const confirmPassword = createPasswordConfirm(ctx.db);
 
   app.get('/api/admin/platform/health', staff, async () => ctx.platformHealth.view());
 
   app.post('/api/admin/platform/backup', admin, async (req, reply) => {
     const b = z
-      .object({ password: z.string().min(12, 'Almeno 12 caratteri').max(200), includeKey: z.boolean().default(false) })
+      .object({ password: z.string().min(12, 'Almeno 12 caratteri').max(200), includeKey: z.boolean().default(false), accountPassword: z.string().max(200).optional() })
       .strict()
       .parse(req.body);
+    if (b.includeKey) confirmPassword(req.ip, req.user!.id, b.accountPassword);
     const file = ctx.platformHealth.backup(b.password, req.user!.username, b.includeKey ? ctx.cfg.masterKey : null);
     recordEvent(ctx.db, req.user!.id, 'platform.backup', `${Math.round(file.length / 1024)} KB`, b.includeKey ? 'con la chiave principale' : 'senza la chiave principale');
     const stamp = new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-');

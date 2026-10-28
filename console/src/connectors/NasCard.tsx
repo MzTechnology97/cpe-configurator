@@ -107,7 +107,7 @@ interface Files {
 }
 
 export function NasCard({ n, onSaved }: { n: Nas; onSaved: () => Promise<void> }) {
-  const [f, setF] = useState({ enabled: n.configured ? n.enabled : true, path: n.path, username: n.username, password: '', domain: n.domain, backupPassword: '', includeKey: n.includeKey, hour: n.hour, keep: n.keep });
+  const [f, setF] = useState({ enabled: n.configured ? n.enabled : true, path: n.path, username: n.username, password: '', domain: n.domain, backupPassword: '', includeKey: n.includeKey, hour: n.hour, keep: n.keep, accountPassword: '' });
   const [found, setFound] = useState<Probe | null>(null);
   const [browser, setBrowser] = useState<Probe | null>(null);
   const [test, setTest] = useState<Test | null>(null);
@@ -151,7 +151,7 @@ export function NasCard({ n, onSaved }: { n: Nas; onSaved: () => Promise<void> }
     try {
       const r = await api<Nas>('/api/admin/connectors/nas', {
         method: 'PUT',
-        body: { enabled: f.enabled, path: f.path, ...account(), ...(f.backupPassword ? { backupPassword: f.backupPassword } : {}), includeKey: f.includeKey, hour: f.hour, keep: f.keep },
+        body: { enabled: f.enabled, path: f.path, ...account(), ...(f.backupPassword ? { backupPassword: f.backupPassword } : {}), includeKey: f.includeKey, ...(f.includeKey ? { accountPassword: f.accountPassword } : {}), hour: f.hour, keep: f.keep },
       });
       toast(r.enabled ? `Backup sul NAS attivo: ogni notte alle ${r.hour}:00` : 'Connettore NAS salvato (backup automatico spento)');
       await onSaved();
@@ -259,6 +259,11 @@ export function NasCard({ n, onSaved }: { n: Nas; onSaved: () => Promise<void> }
         <input type="checkbox" checked={f.includeKey} onChange={(e) => setF({ ...f, includeKey: e.target.checked })} />
         Includi la chiave principale (serve per ripristinare su un server nuovo; chi ha file e password del backup può leggere anche le credenziali salvate)
       </label>
+      {f.includeKey && (
+        <Field label="La tua password" hint="Per sicurezza: salvare con la chiave principale chiede la password del tuo account.">
+          <input type="password" autoComplete="current-password" value={f.accountPassword} onChange={(e) => setF({ ...f, accountPassword: e.target.value })} />
+        </Field>
+      )}
       <div className="ui-row">
         <AsyncButton onClick={runTest} onError={fail} disabled={!f.path.trim()}>
           Testa connessione

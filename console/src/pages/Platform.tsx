@@ -129,10 +129,11 @@ function BackupCard() {
   const [pw, setPw] = useState('');
   const [pw2, setPw2] = useState('');
   const [withKey, setWithKey] = useState(false);
+  const [mine, setMine] = useState('');
   const download = async () => {
     if (pw.length < 12) throw new Error('La password deve avere almeno 12 caratteri');
     if (pw !== pw2) throw new Error('Le due password non coincidono');
-    const r = await api<Response>('/api/admin/platform/backup', { method: 'POST', body: { password: pw, includeKey: withKey }, raw: true });
+    const r = await api<Response>('/api/admin/platform/backup', { method: 'POST', body: { password: pw, includeKey: withKey, ...(withKey ? { accountPassword: mine } : {}) }, raw: true });
     if (!r.ok) throw new ApiError(r.status, await r.json().catch(() => ({})));
     const name = /filename="([^"]+)"/.exec(r.headers.get('content-disposition') ?? '')?.[1] ?? 'cdanet-backup.cdanet';
     const url = URL.createObjectURL(await r.blob());
@@ -143,6 +144,7 @@ function BackupCard() {
     setTimeout(() => URL.revokeObjectURL(url), 60_000);
     setPw('');
     setPw2('');
+    setMine('');
     toast('Backup scaricato: conserva la password, senza non si apre');
   };
   return (
@@ -159,6 +161,11 @@ function BackupCard() {
       <label className="ui-check ui-small">
         <input type="checkbox" checked={withKey} onChange={(e) => setWithKey(e.target.checked)} /> Includi la chiave principale del server
       </label>
+      {withKey && (
+        <Field label="La tua password" hint="Per sicurezza: la chiave principale esce solo con la password del tuo account.">
+          <input type="password" autoComplete="current-password" value={mine} onChange={(e) => setMine(e.target.value)} />
+        </Field>
+      )}
       <p className="ui-muted ui-small">
         Le chiavi dei connettori, le password PPPoE degli interventi e le credenziali salvate nel database sono cifrate con la chiave principale del server: per ripristinare il backup su un server nuovo serve anche lei. Includila solo se conservi il file e la password in un posto sicuro.
       </p>
