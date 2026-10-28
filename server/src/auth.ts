@@ -17,11 +17,16 @@ export interface AuthUser {
   mfaSession?: boolean;
   /** A specialist an admin gave «visibilità piena» (sees CDA Net's data of everyone). */
   fullView?: boolean;
+  /** When the session was opened (ms); [viaDevice]: with the phone's key, not the password. */
+  issuedAt?: number;
+  viaDevice?: boolean;
 }
 
 /** Options of a session: [mfa] opened with the password and the two-step code. */
 export interface SessionOptions {
   mfa?: boolean;
+  /** Opened with the phone's key (quick or persistent login), not with the password. */
+  device?: boolean;
 }
 
 declare module 'fastify' {
@@ -110,7 +115,7 @@ export function createAuth(db: Db, secret: Uint8Array, ttlHours: number, mfaDays
     const expiresAt = new Date(Date.now() + (opts.mfa ? days * 24 : ttlHours) * 3600_000);
     // amr (RFC 8176): how the session was opened, ["pwd", "otp"] = password and two-step code;
     // jti: the id «Esci» revokes (revokeSession)
-    const token = await new SignJWT({ username: u.username, role: u.role, tv: u.token_version, ...(opts.mfa ? { amr: ['pwd', 'otp'] } : {}) })
+    const token = await new SignJWT({ username: u.username, role: u.role, tv: u.token_version, ...(opts.mfa ? { amr: ['pwd', 'otp'] } : opts.device ? { amr: ['dev'] } : {}) })
       .setProtectedHeader({ alg: 'HS256' })
       .setSubject(String(u.id))
       .setIssuer(ISSUER)
@@ -156,7 +161,17 @@ export function createAuth(db: Db, secret: Uint8Array, ttlHours: number, mfaDays
       if (!row || !row.active || row.token_version !== payload.tv) throw new Error('revoked');
       if (typeof payload.jti === 'string' && revokedStmt.get(payload.jti)) throw new Error('logged_out');
       const mfa = Array.isArray(payload.amr) && payload.amr.includes('otp');
-      return { id: row.id, username: row.username, role: row.role, totp: !!row.totp_enabled, ...(row.full_view ? { fullView: true } : {}), ...(mfa ? { mfaSession: true } : {}) };
+      const viaDevice = Array.isArray(payload.amr) && payload.amr.includes('dev');
+      return {
+        id: row.id,
+        username: row.username,
+        role: row.role,
+        totp: !!row.totp_enabled,
+        ...(row.full_view ? { fullView: true } : {}),
+        ...(mfa ? { mfaSession: true } : {}),
+        ...(viaDevice ? { viaDevice: true } : {}),
+        issuedAt: (payload.iat ?? 0) * 1000,
+      };
     } catch {
       throw new HttpError(401, 'unauthorized');
     }

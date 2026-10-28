@@ -64,9 +64,9 @@ export function publicRoutes(app: FastifyInstance, ctx: AppContext) {
   /** A specialist with «visibilità piena» (issue #275): the console shows him the views of the NOC. */
   const fullView = (id: number) => !!(ctx.db.prepare('SELECT full_view f FROM users WHERE id = ? AND role = ?').get(id, 'specialist') as { f: number } | undefined)?.f;
 
-  async function session(u: { id: number; username: string; role: Role; token_version: number; totp_enabled?: number }, ip: string, notify = true, mfa = false) {
+  async function session(u: { id: number; username: string; role: Role; token_version: number; totp_enabled?: number }, ip: string, notify = true, mfa = false, device = false) {
     ctx.db.prepare('UPDATE users SET last_login_at = ? WHERE id = ?').run(nowIso(), u.id);
-    const { token, expiresAt } = await ctx.auth.issueToken(u, { mfa });
+    const { token, expiresAt } = await ctx.auth.issueToken(u, { mfa, device });
     // admins and specialists: a login from a new address is told to the NOC
     if (isStaff(u.role) && notify) ctx.notify.adminLogin(u.id, u.username, ip, roleLabel(u.role));
     const mfaSetupRequired = isStaff(u.role) && ctx.auth.totpRequiredForAdmins() && !u.totp_enabled;
@@ -264,6 +264,7 @@ export function publicRoutes(app: FastifyInstance, ctx: AppContext) {
   // Persistent login: the app stays signed in with the phone's key; the key expires after
   // DEVICE_IDLE_DAYS without use and in any case DEVICE_MAX_DAYS after the login with the password.
   const DEVICE_IDLE_DAYS = 30;
+  const DEVICE_ENROL_WINDOW_MS = 15 * 60_000;
   const DEVICE_MAX_DAYS = 180;
   const DAY_MS = 24 * 3600 * 1000;
   const deviceExpiry = (createdAt: string, now = Date.now()) =>
@@ -277,6 +278,9 @@ export function publicRoutes(app: FastifyInstance, ctx: AppContext) {
 
   app.post('/api/auth/devices', { preHandler: ctx.auth.requireUser }, async (req, reply) => {
     trusted(req);
+    // only right after a login with the password (and the code, when on): a session taken from
+    // someone, or one opened with a phone key, never turns into a new key (report 25/10/2026, S02)
+    if (req.user!.viaDevice || Date.now() - (req.user!.issuedAt ?? 0) > DEVICE_ENROL_WINDOW_MS) throw new HttpError(403, 'reauth_required');
     const b = z.object({ name: z.string().trim().min(1).max(60), persistent: z.boolean().optional() }).strict().parse(req.body);
     const u = selfRow.get(req.user!.id) as SelfRow;
     // a few phones per account: the oldest ones make room
@@ -347,7 +351,7 @@ export function publicRoutes(app: FastifyInstance, ctx: AppContext) {
     const deviceExpiresAt = d.expires_at ? deviceExpiry(d.created_at) : null;
     ctx.db.prepare('UPDATE auth_devices SET last_used_at = ?, expires_at = COALESCE(?, expires_at) WHERE id = ?').run(nowIso(), deviceExpiresAt, b.id);
     recordEvent(ctx.db, d.user_id, 'account.quick_login', d.username, d.name);
-    return { ...(await session({ id: d.user_id, username: d.username, role: d.role, token_version: d.tv, totp_enabled: d.totp_enabled }, req.ip, !d.persistent)), deviceExpiresAt };
+    return { ...(await session({ id: d.user_id, username: d.username, role: d.role, token_version: d.tv, totp_enabled: d.totp_enabled }, req.ip, !d.persistent, false, true)), deviceExpiresAt };
   });
 
   app.get('/api/meta', { preHandler: ctx.auth.requireUser }, async (req) => ({
