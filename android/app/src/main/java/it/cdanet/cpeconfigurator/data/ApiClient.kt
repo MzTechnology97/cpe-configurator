@@ -45,6 +45,7 @@ private val ERRORS = mapOf(
     "invalid_request" to "Dati non validi",
     "trusted_client_required" to "Client non riconosciuto dal server",
     "client_update_required" to "Aggiorna l'app per continuare",
+    "reauth_required" to "Per sicurezza esci e accedi di nuovo con la password, poi attivalo subito dopo",
     "ssid_secret_not_configured" to "Chiave WPA2 non configurata per questo SSID: avvisa un amministratore",
     "provision_profile_missing" to "Profilo airOS mancante per questo modello: avvisa un amministratore",
     "cpe_admin_secret_missing" to "Credenziali CPE non configurate sul server",

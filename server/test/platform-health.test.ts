@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { openDatabase } from '../src/db.ts';
 import { createPlatformHealth, openBackup, sealBackup, sourceState } from '../src/services/platform-health.ts';
-import { testApp } from './helpers.ts';
+import { ADMIN, testApp } from './helpers.ts';
 
 const ago = (min: number, now: number) => new Date(now - min * 60_000).toISOString();
 
@@ -59,7 +59,11 @@ describe('Salute piattaforma e backup', () => {
     assert.equal(typeof hj.server.dbBytes, 'number');
 
     assert.equal((await t.app.inject({ method: 'POST', url: '/api/admin/platform/backup', headers: A, payload: { password: 'corta' } })).statusCode, 400, 'at least 12 characters');
-    const bk = await t.app.inject({ method: 'POST', url: '/api/admin/platform/backup', headers: A, payload: { password: 'Backup-Password-2026', includeKey: true } });
+    // with the master key: the admin's own password again (a stolen session is not enough)
+    const keyed = { password: 'Backup-Password-2026', includeKey: true };
+    assert.equal((await t.app.inject({ method: 'POST', url: '/api/admin/platform/backup', headers: A, payload: keyed })).json().error, 'wrong_current_password');
+    assert.equal((await t.app.inject({ method: 'POST', url: '/api/admin/platform/backup', headers: A, payload: { ...keyed, accountPassword: 'sbagliata' } })).statusCode, 403);
+    const bk = await t.app.inject({ method: 'POST', url: '/api/admin/platform/backup', headers: A, payload: { ...keyed, accountPassword: ADMIN.password } });
     assert.equal(bk.statusCode, 200, bk.body);
     assert.match(String(bk.headers['content-disposition']), /attachment; filename="cdanet-backup-.*\.cdanet"/);
     const file = bk.rawPayload;

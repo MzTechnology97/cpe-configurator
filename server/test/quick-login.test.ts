@@ -27,6 +27,15 @@ describe('Accesso rapido biometrico dall’app', () => {
     assert.equal(q.json().user.username, 'tecnico');
     const me = await call('GET', '/api/auth/me', undefined, { authorization: `Bearer ${q.json().token}` });
     assert.equal(me.json().user.username, 'tecnico');
+    // a new key only right after a login with the password: never from a phone-key session, never later
+    assert.equal((await call('POST', '/api/auth/devices', { name: 'Altro' }, t.auth(q.json().token, ANDROID))).json().error, 'reauth_required');
+    const realNow = Date.now;
+    Date.now = () => realNow() + 16 * 60_000;
+    try {
+      assert.equal((await call('POST', '/api/auth/devices', { name: 'Altro' }, t.auth(tec, ANDROID))).json().error, 'reauth_required');
+    } finally {
+      Date.now = realNow;
+    }
     assert.equal((await call('POST', '/api/auth/device-login', { id, secret: 'x'.repeat(43) }, ANDROID)).json().error, 'device_revoked');
     assert.equal((await call('POST', '/api/auth/device-login', { id, secret }, {})).statusCode, 403, 'app only');
 
