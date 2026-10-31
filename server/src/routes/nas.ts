@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
-import type { HttpError } from '../auth.ts';
+import { createPasswordConfirm, type HttpError } from '../auth.ts';
 import type { AppContext } from '../context.ts';
 import { recordEvent } from '../db.ts';
 
@@ -12,6 +12,7 @@ import { recordEvent } from '../db.ts';
  */
 export function nasRoutes(app: FastifyInstance, ctx: AppContext) {
   const admin = { preHandler: ctx.auth.requireAdmin };
+  const confirmPassword = createPasswordConfirm(ctx.db);
   const text = (max: number) => z.string().trim().max(max).refine((v) => !/[\r\n\0]/.test(v), 'Caratteri non ammessi');
   // the NAS account as typed (empty password: the saved one, for the same user)
   const account = {
@@ -63,10 +64,14 @@ export function nasRoutes(app: FastifyInstance, ctx: AppContext) {
         includeKey: z.boolean().default(false),
         hour: z.number().int().min(0).max(23).default(3),
         keep: z.number().int().min(1).max(365).default(14),
+        accountPassword: z.string().max(200).optional(),
       })
       .strict()
       .parse(req.body);
-    ctx.nas.save({ ...b, password: b.password || undefined, backupPassword: b.backupPassword || undefined }, req.user!.id);
+    // nightly copies with the master key, wherever the path points: the admin's password again
+    if (b.includeKey) confirmPassword(req.ip, req.user!.id, b.accountPassword);
+    const { accountPassword: _, ...nas } = b;
+    ctx.nas.save({ ...nas, password: b.password || undefined, backupPassword: b.backupPassword || undefined }, req.user!.id);
     const v = ctx.nas.view();
     recordEvent(
       ctx.db,

@@ -200,6 +200,8 @@ exit 0
     // saved: no password comes back
     const save = { enabled: true, path: '\\\\nas.lan\\Backup\\CDA Net\\notte', username: 'backup', password: 'Nas-Pass-1', domain: '', backupPassword: 'Backup-Pass-12345', includeKey: false, hour: 3, keep: 2 };
     assert.equal((await call('PUT', '/api/admin/connectors/nas', { ...save, backupPassword: 'corta' })).statusCode, 400);
+    // nightly copies with the master key: only with the admin's own password
+    assert.equal((await call('PUT', '/api/admin/connectors/nas', { ...save, includeKey: true })).json().error, 'wrong_current_password');
     const v = (await call('PUT', '/api/admin/connectors/nas', save)).json();
     assert.deepEqual([v.configured, v.enabled, v.path, v.passwordSet, v.backupPasswordSet, v.keep], [true, true, save.path, true, true, 2]);
     assert.ok(!JSON.stringify((await call('GET', '/api/admin/connectors')).json()).match(/Nas-Pass-1|Backup-Pass-12345/), 'never the passwords');
