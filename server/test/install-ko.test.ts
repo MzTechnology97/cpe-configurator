@@ -176,7 +176,7 @@ describe('Installazioni KO, rimandate, ritentativi e approvazione NOC', () => {
     // an installer cannot subscribe to the NOC's kinds
     assert.deepEqual((await call('PUT', '/api/notifications/prefs', { telegram: ['install_ko', 'install_activated'] }, T)).json().telegram, ['install_activated']);
     const adminPrefs = (await call('GET', '/api/notifications/prefs')).json();
-    assert.equal(adminPrefs.kinds.length, 19, 'with the screenshot attempts, the CPEs outside the warehouse, the re-pointings without a work order, the platform health, the proactive alerts, the warehouses to restock, the acts of the albo and the threats');
+    assert.equal(adminPrefs.kinds.length, 20, 'with the screenshot attempts, the CPEs outside the warehouse, the re-pointings without a work order, the platform health, the proactive alerts, the warehouses to restock, the acts of the albo, the threats and the OTT services');
     assert.equal(adminPrefs.kinds.find((k: { kind: string }) => k.kind === 'install_ko').telegram, false);
     await app.close();
   });

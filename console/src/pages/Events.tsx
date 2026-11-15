@@ -115,6 +115,7 @@ const LABELS: Record<string, string> = {
   'operator_sites.edit': 'Sito di un altro operatore modificato',
   'operator_sites.delete': 'Sito di un altro operatore eliminato',
   'operator_sites.import': 'Antenne altri operatori: aggiornamento dai dati aperti avviato',
+  'ott.service': 'Servizio OTT/CDN aggiunto, modificato o tolto',
   'threats.asset': 'Scheda asset (Minacce) modificata',
   'threats.check': 'Controllo Minacce avviato a mano',
   'threats.password': 'Password controllata sulle liste rubate (mai salvata)',

@@ -21,6 +21,7 @@ export const NOTIFY_KINDS = {
   stock_low: { label: 'Magazzino di un installatore sotto il minimo di CPE', audience: 'noc', telegram: true },
   repoint_unplanned: { label: 'Ripuntamento senza intervento (anche di CPE installate da altri)', audience: 'noc', telegram: true },
   platform: { label: 'Salute piattaforma: un servizio si è fermato o è ripartito (UISP, ISP Billing, guasti Enel, Victron, disco)', audience: 'noc', telegram: false },
+  ott: { label: 'Servizi OTT e CDN: un servizio irraggiungibile o lento dalla nostra rete, guasti dichiarati, molti servizi giù insieme', audience: 'noc', telegram: true },
   threats: { label: 'Minacce: nostri domini, IP, email o fornitori trovati su ransomware.live', audience: 'noc', telegram: true },
   albo: { label: 'Albo e permessi: atti su reti e bandi nei comuni scelti (scavi, antenne, telecomunicazioni, connettività)', audience: 'noc', telegram: true },
   proactive: { label: 'Avvisi proattivi: segnale delle CPE in calo, AP vicini alla saturazione, POP a batteria', audience: 'noc', telegram: true },

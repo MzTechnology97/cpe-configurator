@@ -36,6 +36,8 @@ import { createThreats, type Threats } from './services/threats.ts';
 import { threatsRoutes } from './routes/threats.ts';
 import { createOperatorSites, type OperatorSites } from './services/operator-sites.ts';
 import { operatorSitesRoutes } from './routes/operator-sites.ts';
+import { createOttMonitor, type OttMonitor } from './services/ott-monitor.ts';
+import { ottMonitorRoutes } from './routes/ott-monitor.ts';
 import { docsRoutes } from './routes/docs.ts';
 import { createNotifier, type Notifier } from './services/notify.ts';
 import { createTelegram } from './services/telegram.ts';
@@ -200,6 +202,7 @@ export async function buildApp(
     albo: undefined as unknown as Albo,
     threats: undefined as unknown as Threats,
     operatorSites: undefined as unknown as OperatorSites,
+    ottMonitor: undefined as unknown as OttMonitor,
     serverSettings,
     dem,
     terrain: createTerrainStore({ dir: cfg.terrainDir, dem, ...(opts.fetchImpl ? { fetchImpl: opts.fetchImpl } : {}) }),
@@ -271,6 +274,16 @@ export async function buildApp(
     isOn: () => modules.enabled('operator_sites'),
     log: (m) => pushLog(m),
   });
+  ctx.ottMonitor = createOttMonitor(db, {
+    ...(opts.fetchImpl ? { fetchImpl: opts.fetchImpl } : {}),
+    isOn: () => modules.enabled('ott_monitor'),
+    notice: (title, lines) => ctx.notify.inbox.push('noc', { kind: 'ott', title, lines }),
+    group: (html) => {
+      if (modules.enabled('telegram')) void telegram.notify('ott', html);
+    },
+    log: (m) => pushLog(m),
+  });
+  ctx.ottMonitor.seed();
   ctx.notify = createNotifier(db, cfg, telegram, () => ctx.uisp, version, () => modules.enabled('telegram'), undefined, (ids, n) => {
     ctx.live.publish('notifications', ids);
     // to the phones at once (Firebase); the reminders of the work orders are scheduled by the app itself
@@ -427,6 +440,7 @@ export async function buildApp(
   alboRoutes(app, ctx);
   threatsRoutes(app, ctx);
   operatorSitesRoutes(app, ctx);
+  ottMonitorRoutes(app, ctx);
   docsRoutes(app, ctx);
   mapRoutes(app, ctx);
   networkRoutes(app, ctx);
