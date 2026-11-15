@@ -130,6 +130,9 @@ const envSchema = z.object({
   ANDROID_RELEASE_SYNC_MINUTES: int(30, 0, 1440),
   /** RADIUS state copied from the billing every N minutes (each copy reads every account: 2 is the floor). */
   CRM_SYNC_MINUTES: int(10, 2, 60),
+  /** ransomware.live PRO API (module Minacce): the key is created by the owner, kept here only. */
+  RANSOMWARE_LIVE_API_KEY: optionalText(400),
+  RANSOMWARE_LIVE_URL: z.string().url().default('https://api-pro.ransomware.live'),
 
   ROUTEROS_ALLOW_PUBLIC: z.enum(['0', '1']).default('0'),
 
@@ -243,6 +246,7 @@ export interface Config {
   };
   /** Minutes between two copies of the RADIUS state (CRM_SYNC_MINUTES). */
   crmSyncMinutes: number;
+  ransomwareLive: { apiKey: string | undefined; url: string };
   routerOsAllowPublic: boolean;
   /** Android app always on the latest release: older apps get 426 on every call. */
   appForceLatest: boolean;
@@ -357,6 +361,7 @@ export function loadConfig(source: NodeJS.ProcessEnv = process.env, masterKey?: 
       syncMinutes: e.ANDROID_RELEASE_SYNC_MINUTES,
     },
     crmSyncMinutes: e.CRM_SYNC_MINUTES,
+    ransomwareLive: { apiKey: e.RANSOMWARE_LIVE_API_KEY, url: e.RANSOMWARE_LIVE_URL },
     routerOsAllowPublic: e.ROUTEROS_ALLOW_PUBLIC === '1',
     appForceLatest: e.APP_FORCE_LATEST === '1',
     firmwareBypass: e.FIRMWARE_BYPASS === '1',

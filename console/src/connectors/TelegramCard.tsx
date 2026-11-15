@@ -11,6 +11,7 @@ const EVENTS: Array<[string, string, string]> = [
   ['uisp_status', 'Servizi giù / di nuovo su', 'UISP, ISP Billing, magazzino, guasti Enel, Victron e spazio su disco: solo al cambio di stato, controllo ogni 5 minuti'],
   ['security', 'Sicurezza', 'account bloccato per tentativi, admin da un indirizzo nuovo, password admin cambiate'],
   ['power_outage', 'Guasti Enel', 'guasti e lavori e-distribuzione nelle zone di interesse e vicino agli AP, e i ripristini'],
+  ['threats', 'Minacce', 'domini, IP, email o fornitori delle schede asset trovati su ransomware.live (modulo Minacce)'],
   ['albo', 'Albo e permessi', 'atti dell’albo pretorio su scavi, fibra e antenne e bandi su connettività dei comuni scelti (modulo Albo e permessi)'],
   ['daily_summary', 'Riepilogo serale e report mensile', 'ogni sera installazioni riuscite/fallite, collaudi, CPE ancora da accettare; il 1° del mese alle 8 il report del mese finito, testo e PDF'],
 ];

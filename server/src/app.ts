@@ -32,6 +32,8 @@ import { createOui } from './services/oui.ts';
 import { createOutages, type Outages } from './services/outages.ts';
 import { createAlbo, type Albo } from './services/albo.ts';
 import { alboRoutes } from './routes/albo.ts';
+import { createThreats, type Threats } from './services/threats.ts';
+import { threatsRoutes } from './routes/threats.ts';
 import { createNotifier, type Notifier } from './services/notify.ts';
 import { createTelegram } from './services/telegram.ts';
 import type { Uisp } from './services/uisp.ts';
@@ -193,6 +195,7 @@ export async function buildApp(
     oui,
     outages: undefined as unknown as Outages,
     albo: undefined as unknown as Albo,
+    threats: undefined as unknown as Threats,
     serverSettings,
     dem,
     terrain: createTerrainStore({ dir: cfg.terrainDir, dem, ...(opts.fetchImpl ? { fetchImpl: opts.fetchImpl } : {}) }),
@@ -244,6 +247,17 @@ export async function buildApp(
     },
     log: (m) => pushLog(m),
   });
+  ctx.threats = createThreats(db, {
+    ...(opts.fetchImpl ? { fetchImpl: opts.fetchImpl, pauseMs: 0 } : {}),
+    apiKey: () => cfg.ransomwareLive.apiKey,
+    baseUrl: cfg.ransomwareLive.url,
+    isOn: () => modules.enabled('threats'),
+    notice: (title, lines) => ctx.notify.inbox.push('noc', { kind: 'threats', title, lines }),
+    group: (html) => {
+      if (modules.enabled('telegram')) void telegram.notify('threats', html);
+    },
+    log: (m) => pushLog(m),
+  });
   ctx.notify = createNotifier(db, cfg, telegram, () => ctx.uisp, version, () => modules.enabled('telegram'), undefined, (ids, n) => {
     ctx.live.publish('notifications', ids);
     // to the phones at once (Firebase); the reminders of the work orders are scheduled by the app itself
@@ -278,6 +292,14 @@ export async function buildApp(
         read: () => {
           if (!modules.enabled('albo') || !ctx.albo.config().sources.length) return null;
           const s = ctx.albo.status();
+          return s ? { at: s.ok ? s.at : null, error: s.ok ? null : (s.error ?? 'errore') } : { at: null, error: null };
+        },
+      },
+      {
+        id: 'threats', label: 'Minacce (ransomware.live)', everyMin: 24 * 60, lateMin: 30 * 60,
+        read: () => {
+          if (!modules.enabled('threats') || !ctx.threats.configured() || !ctx.threats.assets().length) return null;
+          const s = ctx.threats.status();
           return s ? { at: s.ok ? s.at : null, error: s.ok ? null : (s.error ?? 'errore') } : { at: null, error: null };
         },
       },
@@ -390,6 +412,7 @@ export async function buildApp(
   statsRoutes(app, ctx);
   outageRoutes(app, ctx);
   alboRoutes(app, ctx);
+  threatsRoutes(app, ctx);
   mapRoutes(app, ctx);
   networkRoutes(app, ctx);
   pointingRoutes(app, ctx);

@@ -941,6 +941,42 @@ const MIGRATIONS: Array<string | CodeMigration> = [
   );
   CREATE INDEX albo_items_seen ON albo_items(first_seen);
   `,
+  // 52 · v1.38.0: «Minacce» (Carmelo, 15/11/2026, NIS2): the assets with their domains, IPs and
+  // emails checked against ransomware.live, the hits, and the password checks (never the password)
+  `
+  CREATE TABLE threat_assets(
+    id INTEGER PRIMARY KEY,
+    name TEXT NOT NULL,
+    kind TEXT NOT NULL,
+    search_name INTEGER NOT NULL DEFAULT 0,
+    domains TEXT NOT NULL DEFAULT '[]',
+    ips TEXT NOT NULL DEFAULT '[]',
+    emails TEXT NOT NULL DEFAULT '[]',
+    notes TEXT NOT NULL DEFAULT '',
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    updated_by INTEGER REFERENCES users(id) ON DELETE SET NULL
+  );
+  CREATE TABLE threat_hits(
+    id TEXT PRIMARY KEY,
+    asset_id INTEGER NOT NULL REFERENCES threat_assets(id) ON DELETE CASCADE,
+    source TEXT NOT NULL CHECK(source IN('victim','ioc')),
+    indicator TEXT NOT NULL,
+    title TEXT NOT NULL DEFAULT '',
+    group_name TEXT NOT NULL DEFAULT '',
+    url TEXT NOT NULL DEFAULT '',
+    published_at TEXT,
+    first_seen TEXT NOT NULL
+  );
+  CREATE INDEX threat_hits_seen ON threat_hits(first_seen);
+  CREATE TABLE threat_password_checks(
+    id INTEGER PRIMARY KEY,
+    asset_id INTEGER NOT NULL REFERENCES threat_assets(id) ON DELETE CASCADE,
+    label TEXT NOT NULL,
+    seen INTEGER NOT NULL,
+    checked_at TEXT NOT NULL
+  );
+  `,
 ];
 
 export function openDatabase(path: string): Db {
