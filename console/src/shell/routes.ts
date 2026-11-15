@@ -70,6 +70,7 @@ export const ROUTES: Array<Route | Group> = [
   { id: 'customers', icon: 'my_location', label: 'Clienti', all: true, react: () => import('../pages/Customers').then((m) => m.Customers) },
   { id: 'stats', icon: 'query_stats', label: 'Statistiche', all: true, module: 'stats', react: () => import('../pages/Stats').then((m) => m.Stats) },
   { id: 'outages', icon: 'power_off', label: 'Guasti Enel', module: 'power_outages', react: () => import('../pages/Outages').then((m) => m.Outages) },
+  { id: 'albo', icon: 'cell_tower', label: 'Albo e permessi', all: true, module: 'albo', react: () => import('../pages/Albo').then((m) => m.Albo) },
   { id: 'network', icon: 'hub', label: 'Stato rete', module: 'network_status', react: () => import('../pages/Network').then((m) => m.Network) },
   { id: 'ia-ap', icon: 'troubleshoot', label: 'IA-AP', all: true, react: () => import('../pages/Advisor').then((m) => m.Advisor) },
   { id: 'mytemplates', icon: 'memory', label: 'Template disponibili', installer: true, react: () => import('../pages/MyTemplates').then((m) => m.MyTemplates) },

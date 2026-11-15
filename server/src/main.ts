@@ -25,6 +25,7 @@ const stopSync = cfg.releases.githubRepo
 
 ctx.notify.start();
 ctx.outages.start();
+ctx.albo.start();
 ctx.crmSync.start();
 ctx.victronSync.start();
 ctx.warehouse.start();
@@ -48,6 +49,7 @@ const shutdown = async (signal: string) => {
   ctx.nas.stop();
   ctx.crowdsec.stop();
   ctx.outages.stop();
+  ctx.albo.stop();
   ctx.crmSync.stop();
   ctx.victronSync.stop();
   ctx.warehouse.stop();

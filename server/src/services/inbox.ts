@@ -21,6 +21,7 @@ export const NOTIFY_KINDS = {
   stock_low: { label: 'Magazzino di un installatore sotto il minimo di CPE', audience: 'noc', telegram: true },
   repoint_unplanned: { label: 'Ripuntamento senza intervento (anche di CPE installate da altri)', audience: 'noc', telegram: true },
   platform: { label: 'Salute piattaforma: un servizio si è fermato o è ripartito (UISP, ISP Billing, guasti Enel, Victron, disco)', audience: 'noc', telegram: false },
+  albo: { label: 'Albo e permessi: atti su reti e bandi nei comuni scelti (scavi, antenne, telecomunicazioni, connettività)', audience: 'noc', telegram: true },
   proactive: { label: 'Avvisi proattivi: segnale delle CPE in calo, AP vicini alla saturazione, POP a batteria', audience: 'noc', telegram: true },
 } as const;
 export type NotifyKind = keyof typeof NOTIFY_KINDS;
