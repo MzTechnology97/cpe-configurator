@@ -34,6 +34,8 @@ import { createAlbo, type Albo } from './services/albo.ts';
 import { alboRoutes } from './routes/albo.ts';
 import { createThreats, type Threats } from './services/threats.ts';
 import { threatsRoutes } from './routes/threats.ts';
+import { createOperatorSites, type OperatorSites } from './services/operator-sites.ts';
+import { operatorSitesRoutes } from './routes/operator-sites.ts';
 import { docsRoutes } from './routes/docs.ts';
 import { createNotifier, type Notifier } from './services/notify.ts';
 import { createTelegram } from './services/telegram.ts';
@@ -197,6 +199,7 @@ export async function buildApp(
     outages: undefined as unknown as Outages,
     albo: undefined as unknown as Albo,
     threats: undefined as unknown as Threats,
+    operatorSites: undefined as unknown as OperatorSites,
     serverSettings,
     dem,
     terrain: createTerrainStore({ dir: cfg.terrainDir, dem, ...(opts.fetchImpl ? { fetchImpl: opts.fetchImpl } : {}) }),
@@ -257,6 +260,15 @@ export async function buildApp(
     group: (html) => {
       if (modules.enabled('telegram')) void telegram.notify('threats', html);
     },
+    log: (m) => pushLog(m),
+  });
+  ctx.operatorSites = createOperatorSites(db, {
+    ...(opts.fetchImpl ? { fetchImpl: opts.fetchImpl } : {}),
+    token: () => cfg.openCellId.token,
+    url: cfg.openCellId.url,
+    nets: cfg.openCellId.nets,
+    bbox: cfg.openCellId.bbox,
+    isOn: () => modules.enabled('operator_sites'),
     log: (m) => pushLog(m),
   });
   ctx.notify = createNotifier(db, cfg, telegram, () => ctx.uisp, version, () => modules.enabled('telegram'), undefined, (ids, n) => {
@@ -414,6 +426,7 @@ export async function buildApp(
   outageRoutes(app, ctx);
   alboRoutes(app, ctx);
   threatsRoutes(app, ctx);
+  operatorSitesRoutes(app, ctx);
   docsRoutes(app, ctx);
   mapRoutes(app, ctx);
   networkRoutes(app, ctx);

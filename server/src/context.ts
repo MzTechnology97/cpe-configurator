@@ -26,6 +26,7 @@ import type { Oui } from './services/oui.ts';
 import type { Outages } from './services/outages.ts';
 import type { Albo } from './services/albo.ts';
 import type { Threats } from './services/threats.ts';
+import type { OperatorSites } from './services/operator-sites.ts';
 import type { Notifier } from './services/notify.ts';
 import type { Telegram } from './services/telegram.ts';
 import type { Dem } from './services/dem.ts';
@@ -88,6 +89,7 @@ export interface AppContext {
   outages: Outages;
   albo: Albo;
   threats: Threats;
+  operatorSites: OperatorSites;
   dem: Dem;
   /** TINITALY terrain and WorldCover land cover imported by the admin (SRTM where missing). */
   terrain: TerrainStore;
