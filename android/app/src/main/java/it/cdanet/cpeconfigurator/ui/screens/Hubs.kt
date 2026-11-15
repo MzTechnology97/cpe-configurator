@@ -65,6 +65,8 @@ fun networkTabTitles(m: Map<String, Boolean>, admin: Boolean = false) = buildLis
     if (m["network_status"] != false) add("Stato")
     // IA-AP: what to fix on APs and CPEs, admins only (the server refuses the others)
     if (admin) add("IA-AP")
+    // «Albo e permessi»: off by default, so only when the server says it is on
+    if (admin && m["albo"] == true) add("Albo")
     if (m["power_outages"] != false) {
         add("Guasti")
         add("Aree e avvisi")
@@ -159,6 +161,7 @@ fun NetworkHub(c: AppContainer, selected: Int, onSelect: (Int) -> Unit, onAim: (
         when (t) {
             "Stato" -> HubTab(t, R.drawable.ic_hub) { NetworkStatusScreen(c) }
             "IA-AP" -> HubTab(t, R.drawable.ic_troubleshoot) { AdvisorScreen(c) }
+            "Albo" -> HubTab(t, R.drawable.ic_cell_tower) { AlboScreen(c) }
             "Guasti" -> HubTab(t, R.drawable.ic_power_off) { OutagesScreen(c, OutageSection.List) }
             "Aree e avvisi" -> HubTab(t, R.drawable.ic_my_location) { OutagesScreen(c, OutageSection.Areas) }
             else -> HubTab(t, R.drawable.ic_explore, scroll = false) { PointingScreen(c, onAim = onAim, onCompass = onCompass) }

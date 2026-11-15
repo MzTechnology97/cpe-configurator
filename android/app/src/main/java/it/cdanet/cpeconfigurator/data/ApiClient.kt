@@ -397,6 +397,12 @@ class ApiClient(
     suspend fun reportKo(req: KoRequest): Long =
         AppJson.decodeFromString(KoCreatedDto.serializer(), request("POST", "/api/installs/ko", AppJson.encodeToJsonElement(KoRequest.serializer(), req))).id
 
+    /** «Albo e permessi» (who sees everything): the acts found, newest first. */
+    suspend fun albo(): AlboDto = AppJson.decodeFromString(AlboDto.serializer(), request("GET", "/api/admin/albo?limit=300"))
+
+    /** «Albo e permessi» (admins): reads every list now. */
+    suspend fun alboCheck(): AlboStatusDto = AppJson.decodeFromString(AlboStatusDto.serializer(), request("POST", "/api/admin/albo/check", buildJsonObject {}))
+
     /** IA-AP (admins): findings on APs and CPEs. */
     suspend fun advisor(): AdvisorDto = AppJson.decodeFromString(AdvisorDto.serializer(), request("GET", "/api/admin/advisor"))
 

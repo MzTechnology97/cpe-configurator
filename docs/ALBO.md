@@ -34,6 +34,15 @@ Le parole di serie coprono fibra, scavi, minitrincea, SRB, antenne, 5G e gli ope
 
 **Controlla ora** (solo admin) fa subito il controllo.
 
+## App Android
+
+**Rete → Albo**, per amministratori e direttore tecnico, compare solo con il modulo acceso. Ci sono:
+- gli atti trovati, con filtro Tutti/Albo/Bandi e ricerca per comune o parola;
+- l'apertura dell'atto con un tocco;
+- «Controlla ora», solo per gli admin.
+
+Comuni, elenchi e parole si cambiano nella console. Le notifiche arrivano nella pagina Notifiche dell'app con l'icona 📜.
+
 ## Avvisi
 
 Al **primo controllo** di un elenco gli atti già pubblicati si salvano senza avvisi, per evitare decine di notifiche il giorno dell'aggiunta. Lo stesso vale quando cambia l'indirizzo di un elenco.
