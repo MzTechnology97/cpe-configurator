@@ -1,6 +1,6 @@
 import type { AppContext } from '../context.ts';
 import { nowIso } from '../db.ts';
-import { channelCandidates } from '../domain/advisor.ts';
+import { channelCandidates, RULES } from '../domain/advisor.ts';
 import {
   averageSamples,
   channelOf,
@@ -226,7 +226,7 @@ export function createOptimizer(ctx: AppContext, opts: { timing?: Partial<Optimi
       run.step = 'Controllo dei canali che le CPE possono seguire';
       save(run);
       const cpeConfigs = await Promise.all([...baseline.values()].map((s) => (s.id ? uisp().airmaxWireless(s.id).catch(() => null) : Promise.resolve(null))));
-      run.candidates = run.candidates.filter((c) => regulatoryEntry(config, c.centre, c.width) && cpeConfigs.every((cc) => !cc || cpeFollows(cc, c.centre, c.width)));
+      run.candidates = run.candidates.filter((c) => c.width <= RULES.maxWidthMhz && regulatoryEntry(config, c.centre, c.width) && cpeConfigs.every((cc) => !cc || cpeFollows(cc, c.centre, c.width)));
       if (!run.candidates.length) throw new Error('nessun canale candidato utilizzabile (tabella dei canali della radio o elenco frequenze delle CPE)');
       for (const c of run.candidates) {
         run.step = `Prova ${c.centre}/${c.width} MHz: cambio del canale`;
@@ -369,7 +369,7 @@ export function createOptimizer(ctx: AppContext, opts: { timing?: Partial<Optimi
       const runs = read();
       if (runs.some((r) => r.apId === f.apId && (r.state === 'programmato' || r.state === 'in_corso'))) throw Object.assign(new Error('already_scheduled'), { status: 409 });
       const range = ctx.advisor.range();
-      const inside = (c: { centre: number; width: number }) => c.centre - c.width / 2 >= range.from && c.centre + c.width / 2 <= range.to;
+      const inside = (c: { centre: number; width: number }) => c.width <= RULES.maxWidthMhz && c.centre - c.width / 2 >= range.from && c.centre + c.width / 2 <= range.to;
       let candidates: Array<{ centre: number; width: number }>;
       const fc = Number(f.params?.frequenza);
       const fw = Number(f.params?.ampiezza);
