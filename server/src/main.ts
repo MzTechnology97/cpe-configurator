@@ -26,7 +26,7 @@ const stopSync = cfg.releases.githubRepo
 ctx.notify.start();
 ctx.outages.start();
 ctx.albo.start();
-ctx.crmSync.start();
+ctx.crmSync.start(cfg.crmSyncMinutes * 60_000);
 ctx.victronSync.start();
 ctx.warehouse.start();
 ctx.platformHealth.start();

@@ -364,6 +364,14 @@ export const MCP_TOOLS: McpTool[] = [
     path: (a) => `/api/admin/crm/radius${qs({ q: str(a.q), filter: str(a.filter, 20), limit: 100 })}`,
   },
   {
+    name: 'sessioni_pppoe_export',
+    title: 'Sessioni PPPoE (export a pagine)',
+    description:
+      "Tutti gli account PPPoE con la sessione, 200 per pagina in ordine di login: login, stato, online, IP, inizio e durata della sessione, profilo, ultimo aggiornamento. Per un server interno (CRM): si passa nextCursor della pagina precedente come cursor finché è null. Copia dello stato RADIUS fatta ogni everyMinutes minuti (syncedAt); niente dati personali.",
+    inputSchema: obj({ cursor: { type: 'string', description: 'nextCursor della pagina precedente (vuoto per la prima)' }, limit: { type: 'integer', minimum: 1, maximum: 200 }, terminated: { type: 'boolean', description: 'Anche gli account terminati' } }),
+    path: (a) => `/api/admin/crm/radius/export${qs({ cursor: str(a.cursor, 200), limit: int(a.limit, 1, 200), terminated: a.terminated === true ? 1 : undefined })}`,
+  },
+  {
     name: 'installazioni',
     title: 'Installazioni',
     description: 'Le installazioni (job) più recenti: CPE, cliente, stato, collaudo.',

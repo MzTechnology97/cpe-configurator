@@ -96,6 +96,12 @@ Serve a un server nostro che deve leggere gli stessi strumenti senza un browser 
 
 Il server chiama `POST https://<server>/mcp` con `Authorization: Bearer cdasvc_…`. Il corpo è JSON-RPC 2.0: `initialize`, `tools/list`, `tools/call` con `{ "name": "...", "arguments": { ... } }`. La risposta di `tools/call` è `result.content[0].text`, un JSON `{ "avviso": "...", "dati": ... }`.
 
+**Sessioni PPPoE per il CRM:** lo strumento `sessioni_pppoe_export` (route `GET /api/admin/crm/radius/export?cursor=&limit=&terminated=`) dà tutti gli account PPPoE a pagine di 200, in ordine di login. Il cursore è `nextCursor`, che vale `null` all'ultima pagina.
+- **Campi per ogni account:** `login`, `accountId`, `state`, `online`, `ip`, `sessionStart`, `sessionSeconds`, `profile`, `accountStatus`, `suspended`, `checkedAt`.
+- **Campi della pagina:** `syncedAt`, `everyMinutes`, `total`, `nextCursor`, `items`.
+- **Cosa non c'è:** nomi, indirizzi e telefoni. Manca anche il NAS, che il gestionale non dà.
+- **Freschezza:** è la copia RADIUS più recente. L'intervallo si cambia nel `.env` con `CRM_SYNC_MINUTES` (2-60, predefinito 10).
+
 - `POST /api/admin/mcp/service-tokens` `{ name, code, days? }` → `{ id, name, token, expiresAt, url }`. Solo admin con verifica in due passaggi.
 
 ## Collegarsi

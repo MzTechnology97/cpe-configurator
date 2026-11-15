@@ -36,6 +36,24 @@ describe('Token di servizio MCP (CRM interno, sola lettura)', () => {
     const r = (await rpc({ jsonrpc: '2.0', id: 4, method: 'tools/call', params: { name: 'utenti', arguments: {} } })).json().result;
     assert.ok(!r.isError, JSON.stringify(r));
 
+    // the PPPoE export, a page at a time, without personal data (made-up accounts)
+    const ins = t.db.prepare('INSERT INTO crm_radius(account_id, username, account_status, profile, customer_name, online, client_ip, session_seconds, checked_at) VALUES(?,?,?,?,?,?,?,?,?)');
+    ins.run('a1', 'beta@example.it', 'Attivo', 'HOME-30-6', 'BETA SRL', 1, '10.0.0.2', 3600, '2026-11-15T10:00:00.000Z');
+    ins.run('a2', 'alfa@example.it', 'Attivo', 'HOME-30-6', 'ALFA ANNA', 0, null, null, '2026-11-15T10:00:00.000Z');
+    ins.run('a3', 'gamma@example.it', 'Terminato', 'HOME-30-6', 'GAMMA', 0, null, null, null);
+    const exp = async (args: object) => JSON.parse((await rpc({ jsonrpc: '2.0', id: 9, method: 'tools/call', params: { name: 'sessioni_pppoe_export', arguments: args } })).json().result.content[0].text).dati;
+    const p1 = await exp({ limit: 1 });
+    assert.equal(p1.total, 2, 'terminated accounts only on request');
+    assert.deepEqual(p1.items.map((x: { login: string }) => x.login), ['alfa@example.it']);
+    assert.ok(p1.nextCursor);
+    assert.ok(!JSON.stringify(p1).includes('ANNA'), 'no customer names');
+    const p2 = await exp({ limit: 1, cursor: p1.nextCursor });
+    assert.equal(p2.items[0].login, 'beta@example.it');
+    assert.equal(p2.items[0].sessionStart, '2026-11-15T09:00:00.000Z');
+    assert.equal(p2.items[0].ip, '10.0.0.2');
+    assert.equal(p2.nextCursor, null);
+    assert.equal((await exp({ terminated: true })).total, 3);
+
     // in the list of the connections, then revoked
     const list = (await t.app.inject({ method: 'GET', url: '/api/admin/mcp', headers: H })).json();
     const row = list.connections.find((c: { id: number }) => c.id === id);

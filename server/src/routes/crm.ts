@@ -18,6 +18,57 @@ export function crmRoutes(app: FastifyInstance, ctx: AppContext) {
 
   app.get('/api/admin/crm/radius/status', admin, async () => ({ configured: ctx.crm.client() !== null, ...ctx.crmSync.state() }));
 
+  /**
+   * Every PPPoE account with its session, a page at a time (cursor on the login), for a server of
+   * ours (the internal CRM, through the MCP tool sessioni_pppoe_export). Only what the session
+   * needs: login, state, IP, start and length, when it was read; never names, addresses, phones.
+   * The copy is the last RADIUS sync (CRM_SYNC_MINUTES); the NAS is not in the billing's answer.
+   */
+  app.get('/api/admin/crm/radius/export', admin, async (req) => {
+    const q = z
+      .object({
+        cursor: z.string().max(200).default(''),
+        limit: z.coerce.number().int().min(1).max(200).default(200),
+        terminated: z.enum(['0', '1']).default('0'),
+      })
+      .parse(req.query);
+    let after = '';
+    if (q.cursor) {
+      try {
+        after = Buffer.from(q.cursor, 'base64url').toString('utf8');
+      } catch {
+        throw new HttpError(400, 'invalid_cursor');
+      }
+    }
+    const all = ctx.crmSync
+      .all()
+      .filter((r) => q.terminated === '1' || radiusState(r) !== 'terminated')
+      .sort((a, b) => (a.username < b.username ? -1 : a.username > b.username ? 1 : 0));
+    const rest = after ? all.filter((r) => r.username > after) : all;
+    const page = rest.slice(0, q.limit);
+    const last = page.at(-1);
+    const st = ctx.crmSync.state();
+    return {
+      syncedAt: st.at,
+      everyMinutes: ctx.cfg.crmSyncMinutes,
+      total: all.length,
+      nextCursor: rest.length > q.limit && last ? Buffer.from(last.username, 'utf8').toString('base64url') : null,
+      items: page.map((r) => ({
+        login: r.username,
+        accountId: r.accountId,
+        state: radiusState(r),
+        online: r.online,
+        ip: r.clientIp ?? (r.staticIp || null),
+        sessionStart: r.online && r.sessionSeconds !== null && r.checkedAt ? new Date(new Date(r.checkedAt).getTime() - r.sessionSeconds * 1000).toISOString() : null,
+        sessionSeconds: r.online ? r.sessionSeconds : null,
+        profile: r.profile,
+        accountStatus: r.accountStatus,
+        suspended: isSuspended(r),
+        checkedAt: r.checkedAt,
+      })),
+    };
+  });
+
   /** Starts a sync and answers at once: the console polls the status. */
   app.post('/api/admin/crm/radius/sync', admin, async (req) => {
     if (!ctx.crm.client()) throw new HttpError(409, 'crm_not_configured');

@@ -23,7 +23,7 @@ Le chiamate usano `Authorization: Bearer {api_id}:{api_key}`.
 
 ## Stato RADIUS per il NOC
 
-Con il connettore attivo il server copia ogni 10 minuti (prima volta un minuto dopo l'avvio) lo stato RADIUS nella tabella `crm_radius`: tutti gli account ISPRadius con profilo, cliente, gruppo, sospensioni (account `Sospeso`, cliente `suspended`, servizio sospeso) e, per gli account non terminati, la sessione (`/accounts/{id}/status`: online/offline, MAC, IP, durata). Circa un minuto per mille account, quattro letture in parallelo; se una lettura di sessione fallisce resta quella precedente.
+Con il connettore attivo il server copia ogni 10 minuti (`CRM_SYNC_MINUTES` nel `.env`, da 2 a 60) (prima volta un minuto dopo l'avvio) lo stato RADIUS nella tabella `crm_radius`: tutti gli account ISPRadius con profilo, cliente, gruppo, sospensioni (account `Sospeso`, cliente `suspended`, servizio sospeso) e, per gli account non terminati, la sessione (`/accounts/{id}/status`: online/offline, MAC, IP, durata). Circa un minuto per mille account, quattro letture in parallelo; se una lettura di sessione fallisce resta quella precedente.
 
 - **Salute CPE** (amministratori e direttore tecnico): colonna PPPoE e problemi `pppoe_offline` (CPE online in UISP, sessione giù) e `account_suspended`; la CPE si abbina con il MAC della sessione (≈80% sul campo: le CPE Ubiquiti fanno PPPoE con il MAC che UISP conosce) o con l'utente PPPoE dell'installazione. Riquadro **Account PPPoE** con offline, sospesi e account senza CPE in rete.
 - **Stato rete** (solo amministratori): sessioni PPPoE online, offline e sospese delle CPE di ogni AP.
