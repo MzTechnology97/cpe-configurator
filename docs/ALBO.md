@@ -28,6 +28,8 @@ Il server riconosce da solo se l'elenco è un feed o una pagina, e anche la codi
 - Maiuscole e accenti non contano.
 - Più parole di fila valgono insieme («stazione radio base»).
 
+![Albo e permessi (dati finti)](img/albo-e-permessi.png)
+
 Le parole di serie coprono fibra, scavi, minitrincea, SRB, antenne, 5G e gli operatori (Open Fiber, FiberCop, Infratel, TIM, Vodafone, WindTre, Iliad, Eolo, INWIT). Per i bandi coprono connettività, Wi-Fi, rete dati, telefonia, VoIP e videosorveglianza.
 
 **Controlla ora** (solo admin) fa subito il controllo.
