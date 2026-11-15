@@ -304,6 +304,26 @@ data class PopPowerDto(
 @Serializable
 data class NetSummaryDto(val aps: Int = 0, val down: Int = 0, val degraded: Int = 0, val powerOutage: Int = 0, val powerAlarms: Int = 0)
 
+/** «Albo e permessi»: one act on networks or one call for tenders of a chosen municipality. */
+@Serializable
+data class AlboItemDto(
+    val id: String,
+    val comune: String = "",
+    val kind: String = "albo",
+    val title: String = "",
+    val url: String = "",
+    val publishedAt: String? = null,
+    val keywords: List<String> = emptyList(),
+    val firstSeen: String? = null,
+    val notified: Boolean = false,
+)
+
+@Serializable
+data class AlboStatusDto(val at: String? = null, val ok: Boolean = true, val error: String? = null, val sources: Int = 0, val fresh: Int = 0)
+
+@Serializable
+data class AlboDto(val items: List<AlboItemDto> = emptyList(), val status: AlboStatusDto? = null)
+
 /** "Stato rete": state of the POPs/APs the user may see. */
 @Serializable
 data class NetworkStatusDto(
