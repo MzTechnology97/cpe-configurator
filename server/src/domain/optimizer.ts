@@ -1,3 +1,4 @@
+import { RULES } from './advisor.ts';
 /**
  * IA-AP automatic optimisation (pure part): the airMAX wireless configuration with another channel,
  * whether the CPEs can follow, the link metrics read from the AP's stations and the before/after
@@ -43,10 +44,12 @@ export function ieeeModeFor(mode: string | null, width: number): string | null {
 
 /**
  * The configuration as read from UISP with only the channel changed: centre, control frequency,
- * width and IEEE mode; automatic width off. Throws when the radio does not offer the channel.
+ * width and IEEE mode; automatic width off. Throws when the radio does not offer the channel or
+ * it is wider than our PtMP radios go (RULES.maxWidthMhz).
  */
 export function configWithChannel(config: unknown, centre: number, width: number): Record<string, unknown> {
   const c = { ...obj(config) };
+  if (width > RULES.maxWidthMhz) throw new Error(`Larghezza ${width} MHz oltre il massimo delle nostre radio PtMP (${RULES.maxWidthMhz} MHz)`);
   const widths = arr(obj(obj(c.boardInfo).radio1).channelWidthList).map(num).filter((x): x is number => x !== null);
   if (widths.length && !widths.includes(width)) throw new Error(`Larghezza ${width} MHz non supportata dalla radio (${widths.join(', ')})`);
   const entry = regulatoryEntry(config, centre, width);

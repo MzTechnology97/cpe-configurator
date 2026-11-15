@@ -202,6 +202,11 @@ export const RULES = {
   cpeInterference: 6,
   /** Own APs closer than this on overlapping channels can interfere. */
   coChannelM: 6000,
+  /**
+   * Widest channel of the PtMP radios of the network (MHz). Carmelo, 15/11/2026: our APs and CPEs
+   * go up to 40 MHz, never 80. No suggestion and no automatic optimisation goes beyond it.
+   */
+  maxWidthMhz: 40,
 };
 
 /**
@@ -297,7 +302,8 @@ export function rankChannels(
 /**
  * Channels to try on an AP for the automatic optimisation: the best [n] of its link spectrum for
  * each width in [widths] (the current one by default), far enough from each other to be really
- * different (half a channel), never on a near AP, the current channel excluded. Best first.
+ * different (half a channel), never on a near AP, never wider than RULES.maxWidthMhz, the current
+ * channel excluded. Best first.
  */
 export function channelCandidates(inputs: AdvisorInput[], apId: string, o: { range: { from: number; to: number }; minDbm?: number }, widths?: number[], n = 3): Array<ChannelChoice & { width: number }> {
   const ap = inputs.find((i) => i.apId === apId);
@@ -307,6 +313,7 @@ export function channelCandidates(inputs: AdvisorInput[], apId: string, o: { ran
   const spectrum = linkSpectrum(ap.spectrum, ap.stations.map((s) => s.spectrum));
   const links = { from: ap.frequency, signals: ap.stations.map((s) => s.rxSignal).filter((v): v is number => v !== null), minDbm: o.minDbm ?? -75 };
   const all = (widths?.length ? widths : [ap.widthMhz])
+    .filter((w) => w <= RULES.maxWidthMhz)
     .flatMap((w) => rankChannels(spectrum, w, o.range, neighbours, links).map((c) => ({ ...c, width: w })))
     .filter((c) => !(c.centre === ap.frequency && c.width === ap.widthMhz))
     .sort((a, b) => a.occupancy - b.occupancy);
@@ -488,7 +495,7 @@ export function analyzeNetwork(inputs: AdvisorInput[], o: AdvisorOptions): Findi
       const ch = bestChannel(spectrum, w, o.range, neighbours, links);
       if (ch) plan(ap.apId, ch.centre, w);
       out.push({ ...base, id: `narrow:${ap.apId}`, kind: 'width', severity: 'attenzione', title: `Canale da restringere a ${w} MHz`, detail: `SNR mediano delle CPE ${Math.round(medSnr)} dB: dimezzando il canale il rumore cala di 3 dB e i collegamenti deboli tengono modulazioni più alte.`, action: `Passa a ${w} MHz${ch ? ` su ${ch.centre} MHz` : ''}.`, params: { ampiezza: w, ...(ch ? { frequenza: ch.centre } : {}) } });
-    } else if (medSnr !== null && medSnr >= 30 && busy >= RULES.busyWarning && ap.widthMhz <= 40) {
+    } else if (medSnr !== null && medSnr >= 30 && busy >= RULES.busyWarning && ap.widthMhz * 2 <= RULES.maxWidthMhz) {
       const w = ap.widthMhz * 2;
       const ch = bestChannel(spectrum, w, o.range, neighbours, links);
       if (ch) plan(ap.apId, ch.centre, w);
