@@ -74,6 +74,30 @@ Una connessione in sola lettura che prova una modifica riceve l'invito a ricolle
 
 Nota GDPR: quello che Claude legge passa da Anthropic. Per i dati dei clienti serve un accordo sul trattamento dei dati (DPA) con Anthropic.
 
+## Token di servizio (server interni)
+
+Serve a un server nostro che deve leggere gli stessi strumenti senza un browser per il consenso, per esempio il **CRM interno**.
+
+- **Chi lo crea:** un admin con la verifica in due passaggi, da Amministrazione → **Connetti il tuo Claude** → «Token di servizio (server interni)».
+  - Scrive il nome del server e un **codice di verifica nuovo** (o un codice di recupero), poi preme «Crea token di servizio».
+  - Il token (`cdasvc_…`) si vede **una volta sola**. Va salvato subito nel `.env` del server che lo usa, mai in chat o in un repository.
+- **Cosa può fare:** **sempre sola lettura**. Vede gli strumenti di lettura, gli stessi elencati sopra, e mai quelli di scrittura.
+- **Durata e revoca:**
+  - dura al massimo un anno (`days`, 1-365, predefinito 365);
+  - è legato all'admin che lo crea e cade come una connessione: admin disattivato, ruolo tolto, password cambiata, verifica in due passaggi tolta;
+  - si revoca dalla lista **Connessioni**, dove compare come «Servizio · nome»;
+  - al massimo 10 token attivi.
+- **Tracce:** sul server resta solo l'impronta SHA-256. La creazione finisce nel Registro (`mcp.service_token`) e manda un avviso di sicurezza al NOC su Telegram. Ogni chiamata finisce nel Registro come `mcp.call`.
+- **Limiti:** gli stessi delle connessioni.
+  - 120 richieste al minuto per token;
+  - 10 verifiche al minuto degli altri operatori;
+  - una simulazione pesante alla volta;
+  - risposte ripulite e fino a 200 elementi.
+
+Il server chiama `POST https://<server>/mcp` con `Authorization: Bearer cdasvc_…`. Il corpo è JSON-RPC 2.0: `initialize`, `tools/list`, `tools/call` con `{ "name": "...", "arguments": { ... } }`. La risposta di `tools/call` è `result.content[0].text`, un JSON `{ "avviso": "...", "dati": ... }`.
+
+- `POST /api/admin/mcp/service-tokens` `{ name, code, days? }` → `{ id, name, token, expiresAt, url }`. Solo admin con verifica in due passaggi.
+
 ## Collegarsi
 
 L'indirizzo del connettore è `https://<server>/mcp`. Il login apre la pagina «Connetti il tuo Claude» della piattaforma.

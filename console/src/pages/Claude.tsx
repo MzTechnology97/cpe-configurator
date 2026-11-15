@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { api } from '../lib/api';
 import { toast } from '../lib/toast';
-import { AsyncButton, Badge, Button, Card, EmptyState, Notice, PageHeader, Segmented, Skeleton, Table } from '../ui';
+import { AsyncButton, Badge, Button, Card, EmptyState, Field, Notice, PageHeader, Segmented, Skeleton, Table } from '../ui';
 
 /**
  * «Connetti il tuo Claude» (admins): the address of the MCP server of the platform, how to
@@ -36,6 +36,15 @@ export function Claude() {
   const q = useQuery({ queryKey: ['admin', 'mcp'], queryFn: () => api<Mcp>('/api/admin/mcp') });
   const me = useQuery({ queryKey: ['auth', 'account'], queryFn: () => api<{ username: string; totpEnabled: boolean }>('/api/auth/account') });
   const [show, setShow] = useState<'active' | 'all'>('active');
+  const [svcName, setSvcName] = useState('CRM interno');
+  const [svcCode, setSvcCode] = useState('');
+  const [svcToken, setSvcToken] = useState<{ token: string; name: string; expiresAt: string } | null>(null);
+  const createService = async () => {
+    const r = await api<{ token: string; name: string; expiresAt: string }>('/api/admin/mcp/service-tokens', { method: 'POST', body: { name: svcName.trim(), code: svcCode.trim() } });
+    setSvcToken(r);
+    setSvcCode('');
+    await q.refetch();
+  };
   const d = q.data;
   const revoke = async (c: Conn) => {
     if (!confirm(`Revocare la connessione di ${c.username} (${c.client})? Claude non potrà più leggere la piattaforma finché non si ricollega.`)) return;
@@ -116,6 +125,38 @@ export function Claude() {
             <p className="ui-muted ui-small cn-p">
               Mai password, chiavi, token o segreti; mai telefoni, email o codici fiscali dei clienti; elenchi fino a 200 elementi. Fuori da Claude restano account e ruoli, connettori, impostazioni del server, informativa privacy, sblocco degli accessi e revoca delle connessioni, password PPPoE, chiavi Wi-Fi e nuovi subscriber. Ogni richiesta finisce nel Registro con il nome dello strumento. Quello che Claude legge passa da Anthropic: per i dati dei clienti serve l’accordo sul trattamento dei dati (DPA).
             </p>
+          </Card>
+
+          <Card title="Token di servizio (server interni)">
+            <p className="ui-muted ui-small cn-p">
+              Per un server nostro che legge gli stessi strumenti senza browser, per esempio il CRM interno: sempre in sola lettura, valido un anno, legato al tuo account (cade se cambi password o togli la verifica in due passaggi). Il server lo manda come <code>Authorization: Bearer …</code> a {d.url}. Si vede una volta sola: salvalo subito nel file di configurazione del server (.env), mai in chat o in un repository. Si revoca dalle Connessioni qui sotto.
+            </p>
+            {svcToken ? (
+              <>
+                <Notice tone="warn" title={`${svcToken.name} · scade il ${date(svcToken.expiresAt)}`}>
+                  Copialo adesso: chiusa questa pagina non si potrà più vedere.
+                </Notice>
+                <pre className="mcp-pre">{svcToken.token}</pre>
+                <div className="ui-row">
+                  <Button onClick={() => void copy(svcToken.token, 'Token')}>Copia token</Button>
+                  <Button variant="ghost" onClick={() => setSvcToken(null)}>
+                    Fatto, nascondi
+                  </Button>
+                </div>
+              </>
+            ) : (
+              <form className="ac-inline" onSubmit={(e) => e.preventDefault()}>
+                <Field label="Nome del server">
+                  <input maxLength={60} value={svcName} onChange={(e) => setSvcName(e.target.value)} />
+                </Field>
+                <Field label="Codice di verifica">
+                  <input inputMode="numeric" autoComplete="one-time-code" maxLength={12} placeholder="123456" value={svcCode} onChange={(e) => setSvcCode(e.target.value)} />
+                </Field>
+                <AsyncButton type="submit" variant="primary" disabled={!me.data?.totpEnabled || svcName.trim().length < 2 || svcCode.trim().length < 6} onClick={createService} onError={fail}>
+                  Crea token di servizio
+                </AsyncButton>
+              </form>
+            )}
           </Card>
 
           <Card

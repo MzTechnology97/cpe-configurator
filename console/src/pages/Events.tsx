@@ -106,6 +106,7 @@ const LABELS: Record<string, string> = {
   'mcp.authorize': 'Claude collegato alla piattaforma',
   'mcp.call': 'Claude ha letto la piattaforma',
   'mcp.revoke': 'Connessione di Claude revocata',
+  'mcp.service_token': 'Token di servizio MCP creato',
   'nas.verify': 'Prova di ripristino di un backup sul NAS',
   'nas.mkdir': 'Cartella creata sul NAS',
   'connector.nas.update': 'Connettore NAS modificato',
