@@ -27,6 +27,10 @@ const NETWORK_PER_HOUR = 5;
 /** The other operators' coverage (an external quota shared with the field): per connection and minute. */
 const THIRD_PER_MINUTE = 10;
 const REGISTRATIONS_PER_HOUR = 10;
+/** Service tokens (a server of ours, e.g. the internal CRM): read only, at most a year, a few per platform. */
+const SERVICE_MAX_DAYS = 365;
+const SERVICE_MAX_ACTIVE = 10;
+export const SERVICE_PREFIX = 'cdasvc_';
 const PROTOCOLS = ['2025-06-18', '2025-03-26', '2024-11-05'];
 /** Who may call /mcp from a browser (the Claude apps call it from their servers: no Origin). */
 const ORIGINS = [/^https:\/\/([a-z0-9-]+\.)*claude\.ai$/, /^https:\/\/([a-z0-9-]+\.)*claude\.com$/, /^https:\/\/([a-z0-9-]+\.)*anthropic\.com$/];
@@ -524,6 +528,36 @@ ${error ? `<p class="err">${escapeHtml(error)}</p>` : ''}
       tools: MCP_TOOLS.map((t) => ({ name: t.name, title: t.title, write: !!t.method, network: !!t.network })),
       connections: rows.map(({ refreshExpires, canWrite, ...r }) => ({ ...r, canWrite: !!canWrite, active: !r.revokedAt && refreshExpires > now })),
     };
+  });
+
+  /**
+   * A service token: for a server of ours (the internal CRM) that reads the same tools server to
+   * server, with no browser for the OAuth consent. Read only, always: the writes stay with a person.
+   * It belongs to the admin who creates it (fresh second-step code) and falls with them like a
+   * connection (disabled, demoted, new password, no second step); it is shown once, kept as SHA-256,
+   * expires within a year and is revoked from the same list. The NOC hears of every new one.
+   */
+  app.post('/api/admin/mcp/service-tokens', admin, async (req) => {
+    const b = z
+      .object({ name: z.string().trim().min(2).max(60), days: z.number().int().min(1).max(SERVICE_MAX_DAYS).default(SERVICE_MAX_DAYS), code: z.string().trim().min(6).max(12) })
+      .safeParse(req.body ?? {});
+    if (!b.success) throw new HttpError(400, 'invalid_service_token');
+    const u = userById(req.user!.id);
+    if (!u || !stillAdmin(u, u.token_version)) throw new HttpError(403, 'totp_required');
+    if (!checkSecondFactor(db, ctx.sealer, u, b.data.code)) throw new HttpError(401, 'invalid_code');
+    const active = (db.prepare("SELECT COUNT(*) n FROM mcp_tokens t WHERE t.client_id LIKE 'svc_%' AND t.revoked_at IS NULL AND t.access_expires > ?").get(nowIso()) as { n: number }).n;
+    if (active >= SERVICE_MAX_ACTIVE) throw new HttpError(409, 'too_many_service_tokens');
+    const clientId = `svc_${randomBytes(9).toString('hex')}`;
+    const name = `Servizio · ${b.data.name.replace(/[\u0000-\u001f]/g, '')}`;
+    const token = `${SERVICE_PREFIX}${secret()}`;
+    const expires = new Date(Date.now() + b.data.days * 86_400_000).toISOString();
+    db.prepare('INSERT INTO mcp_clients(id, name, redirect_uris, created_at, created_ip, last_used_at) VALUES(?,?,?,?,?,?)').run(clientId, name, '[]', nowIso(), req.ip, nowIso());
+    const r = db
+      .prepare('INSERT INTO mcp_tokens(client_id, user_id, token_version, access_hash, access_expires, refresh_hash, refresh_expires, created_at, created_ip, can_write) VALUES(?,?,?,?,?,?,?,?,?,0)')
+      .run(clientId, u.id, u.token_version, sha(token), expires, sha(secret()), expires, nowIso(), req.ip);
+    recordEvent(db, u.id, 'mcp.service_token', String(r.lastInsertRowid), `token di servizio «${b.data.name}» in sola lettura, scade ${expires.slice(0, 10)}`);
+    ctx.notify.security(`Nuovo token di servizio MCP (sola lettura) «${escapeHtml(b.data.name)}» creato da <b>${escapeHtml(u.username)}</b>, scade il ${expires.slice(0, 10)}.`);
+    return { id: Number(r.lastInsertRowid), name, token, expiresAt: expires, url: `${base(req)}/mcp` };
   });
 
   app.delete('/api/admin/mcp/connections/:id', admin, async (req) => {

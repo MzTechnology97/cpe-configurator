@@ -128,6 +128,8 @@ const envSchema = z.object({
     .or(z.literal('').transform(() => undefined)),
   ANDROID_RELEASE_GITHUB_TOKEN: optionalText(400),
   ANDROID_RELEASE_SYNC_MINUTES: int(30, 0, 1440),
+  /** RADIUS state copied from the billing every N minutes (each copy reads every account: 2 is the floor). */
+  CRM_SYNC_MINUTES: int(10, 2, 60),
 
   ROUTEROS_ALLOW_PUBLIC: z.enum(['0', '1']).default('0'),
 
@@ -239,6 +241,8 @@ export interface Config {
     githubToken: string | undefined;
     syncMinutes: number;
   };
+  /** Minutes between two copies of the RADIUS state (CRM_SYNC_MINUTES). */
+  crmSyncMinutes: number;
   routerOsAllowPublic: boolean;
   /** Android app always on the latest release: older apps get 426 on every call. */
   appForceLatest: boolean;
@@ -352,6 +356,7 @@ export function loadConfig(source: NodeJS.ProcessEnv = process.env, masterKey?: 
       githubToken: e.ANDROID_RELEASE_GITHUB_TOKEN,
       syncMinutes: e.ANDROID_RELEASE_SYNC_MINUTES,
     },
+    crmSyncMinutes: e.CRM_SYNC_MINUTES,
     routerOsAllowPublic: e.ROUTEROS_ALLOW_PUBLIC === '1',
     appForceLatest: e.APP_FORCE_LATEST === '1',
     firmwareBypass: e.FIRMWARE_BYPASS === '1',
