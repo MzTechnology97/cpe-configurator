@@ -80,10 +80,18 @@ jobs:
 
       - name: First install (unattended, local OpenStreetMap)
         run: |
+          # a small extract from the first mirror that answers (one host down must not fail the test)
+          PBF=
+          for u in https://download.geofabrik.de/europe/monaco-latest.osm.pbf https://download.openstreetmap.fr/extracts/europe/monaco-latest.osm.pbf https://download.openstreetmap.fr/extracts/europe/monaco.osm.pbf; do
+            if curl -fsSIL --max-time 20 "$u" >/dev/null; then PBF=$u; break; fi
+            echo "mirror not reachable: $u"
+          done
+          test -n "$PBF" || { echo "no OpenStreetMap mirror reachable"; exit 1; }
+          echo "OpenStreetMap extract: $PBF"
           docker exec \
             -e CDANET_ADMIN_USER=admin -e CDANET_ADMIN_PASSWORD="$ADMIN_PW" \
             -e CDANET_GEOCODER=local -e CDANET_GEOCODER_REGION=custom -e CDANET_MAP=off \
-            -e CDANET_GEOCODER_PBF_URL=https://download.geofabrik.de/europe/monaco-latest.osm.pbf \
+            -e CDANET_GEOCODER_PBF_URL="$PBF" \
             -e CDANET_GEOCODER_REPLICATION_URL= \
             -e CDANET_IMAGE=cdanet-e2e -e CDANET_CHANNEL=ci -e CDANET_SKIP_PULL=1 \
             srv /src/deploy/install-debian.sh

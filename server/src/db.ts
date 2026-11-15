@@ -993,6 +993,27 @@ const MIGRATIONS: Array<string | CodeMigration> = [
     updated_at TEXT NOT NULL
   );
   `,
+  // 54 · v1.40.0: «Antenne altri operatori» (Carmelo, 15/11/2026): the other operators' base
+  // stations, estimated from OpenCelliD (open data) or added by hand by the admins (Eolo)
+  `
+  CREATE TABLE operator_sites(
+    id INTEGER PRIMARY KEY,
+    operator TEXT NOT NULL,
+    source TEXT NOT NULL CHECK(source IN ('opencellid', 'manuale')),
+    lat REAL NOT NULL,
+    lon REAL NOT NULL,
+    radios TEXT NOT NULL DEFAULT '',
+    cells INTEGER NOT NULL DEFAULT 0,
+    samples INTEGER NOT NULL DEFAULT 0,
+    range_m INTEGER NOT NULL DEFAULT 0,
+    status TEXT NOT NULL CHECK(status IN ('stimata', 'da confermare', 'confermata')),
+    note TEXT NOT NULL DEFAULT '',
+    updated_at TEXT NOT NULL,
+    updated_by INTEGER REFERENCES users(id) ON DELETE SET NULL
+  );
+  CREATE INDEX operator_sites_pos ON operator_sites(lat, lon);
+  CREATE INDEX operator_sites_source ON operator_sites(source, operator);
+  `,
 ];
 
 export function openDatabase(path: string): Db {

@@ -76,6 +76,7 @@ export const ROUTES: Array<Route | Group> = [
   { id: 'ia-ap', icon: 'troubleshoot', label: 'IA-AP', all: true, react: () => import('../pages/Advisor').then((m) => m.Advisor) },
   { id: 'mytemplates', icon: 'memory', label: 'Template disponibili', installer: true, react: () => import('../pages/MyTemplates').then((m) => m.MyTemplates) },
   { id: 'coverage', icon: 'explore', label: 'Copertura', module: 'coverage', bottom: true, react: () => import('../pages/Coverage').then((m) => m.Coverage) },
+  { id: 'operator-sites', icon: 'cell_tower', label: 'Antenne altri operatori', staff: true, module: 'operator_sites', react: () => import('../pages/OperatorSites').then((m) => m.OperatorSites) },
   { id: 'feasibility', icon: 'my_location', label: 'Fattibilità', all: true, module: 'coverage', react: () => import('../pages/Feasibility').then((m) => m.Feasibility) },
   { id: 'routeros', icon: 'router', label: 'MikroTik · RouterOS', module: 'routeros', cdaWork: true, react: () => import('../pages/RouterOs').then((m) => m.RouterOs) },
   { group: 'Amministrazione' },
