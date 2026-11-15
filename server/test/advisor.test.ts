@@ -126,7 +126,7 @@ describe('IA-AP: lettura dei dati e regole', () => {
     const b = ap({ apId: 'ap-2', apName: 'N1-D02', location: { lat: 37.51, lon: 14.2 }, heading: 180, frequency: 5510, stations: [station({ deviceId: 'b1' })] });
     const f = analyzeNetwork([a, b], { range });
     const mine = f.filter((x) => x.apId === 'ap-1' && !x.cpe).map((x) => x.kind).sort();
-    assert.deepEqual(mine, ['busy', 'channel', 'cochannel', 'mcs', 'noise', 'width'], 'busy with SNR margin: also a wider channel');
+    assert.deepEqual(mine, ['busy', 'channel', 'cochannel', 'mcs', 'noise'], 'busy with SNR margin, but already at 40 MHz: the widest channel of our PtMP radios');
     const ch = f.find((x) => x.kind === 'channel' && x.apId === 'ap-1')!;
     assert.ok(Math.abs(Number(ch.params!.frequenza) - 5510) >= 40, 'the suggested channel avoids the near AP');
     assert.ok(f.some((x) => x.kind === 'cochannel' && x.apId === 'ap-2'), 'both APs are told');
@@ -176,7 +176,10 @@ describe('IA-AP: lettura dei dati e regole', () => {
     assert.ok(analyzeNetwork([ap({ stations: weak })], { range }).some((x) => x.id === 'narrow:ap-1' && x.params!.ampiezza === 20));
     const load = { at: '', stations: 20, cpeAirtimePct: 3, eveningAirtimePct: 60, eveningUtilizationPct: 30, eveningPeakMbps: 80, capacityMbps: 150, noiseDbm: -95, snrDb: 40, channelWidthMhz: 40, level: 'medio' as const };
     const strong = Array.from({ length: 5 }, (_, i) => station({ deviceId: `s${i}`, rxSignal: -50, noise: -95 }));
-    assert.ok(analyzeNetwork([ap({ stations: strong, load })], { range }).some((x) => x.id === 'wide:ap-1' && x.params!.ampiezza === 80));
+    // our PtMP radios stop at 40 MHz (Carmelo, 15/11/2026): a busy AP already at 40 is never told to go to 80
+    assert.ok(!analyzeNetwork([ap({ stations: strong, load })], { range }).some((x) => x.kind === 'width' || x.params?.ampiezza === 80));
+    const at20 = analyzeNetwork([ap({ frequency: 5500, widthMhz: 20, stations: strong, load: { ...load, channelWidthMhz: 20 } })], { range });
+    assert.ok(at20.some((x) => x.id === 'wide:ap-1' && x.params!.ampiezza === 40), JSON.stringify(at20.map((x) => x.id)));
     assert.deepEqual(kinds(analyzeNetwork([ap({ stations: strong })], { range })), []);
   });
 

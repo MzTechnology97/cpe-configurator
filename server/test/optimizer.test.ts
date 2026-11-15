@@ -114,6 +114,34 @@ describe('IA-AP ottimizzazione: configurazione e confronto', () => {
   });
 });
 
+describe('IA-AP ottimizzazione: mai oltre 40 MHz (radio PtMP di CDA Net)', () => {
+  it('the configuration refuses 80 MHz even when the radio lists it', () => {
+    assert.throws(() => configWithChannel(apConfig(5500, 40), 5530, 80), /oltre il massimo delle nostre radio PtMP \(40 MHz\)/);
+    assert.equal(configWithChannel(apConfig(5500, 20), 5510, 40).channelWidth, 40);
+  });
+
+  it('candidates: no 80 MHz channel, even when asked for', () => {
+    const input: AdvisorInput = { apId: 'ap-1', apName: 'N1-D01', location: null, heading: null, beamWidth: 90, frequency: 5500, widthMhz: 40, spectrum: Array.from({ length: 161 }, (_, i): [number, number] => [5097 + i * 5, 10]), stations: [], load: null };
+    const c = channelCandidates([input], 'ap-1', { range: { from: 5120, to: 5800 } }, [40, 80], 6);
+    assert.ok(c.length > 0 && c.every((x) => x.width === 40), JSON.stringify(c));
+  });
+
+  it('a finding that asks for 80 MHz cannot be scheduled', () => {
+    const { opt } = setup(() => three(100), { params: { frequenza: 5530, ampiezza: 80 } });
+    assert.throws(() => opt.schedule({ findingId: 'channel:ap-1', mode: 'suggested', when: 'night', by: 'admin' }), /no_candidates/);
+  });
+
+  it('a run stored before the limit never writes 80 MHz to the AP', async () => {
+    const { opt, fake, runOf } = setup((c) => three(c === 5300 ? 130 : 100));
+    const run = opt.schedule({ findingId: 'channel:ap-1', mode: 'suggested', when: 'now', by: 'admin' });
+    // as if scheduled by an older version: an 80 MHz channel before the 40 MHz one
+    (run as Run).candidates.unshift({ centre: 5530, width: 80 });
+    await opt.execute(run.id);
+    assert.ok(fake.writes.every((w) => w.width <= 40), JSON.stringify(fake.writes));
+    assert.deepEqual(runOf(run.id).kept, { centre: 5300, width: 40 });
+  });
+});
+
 describe('IA-AP ottimizzazione: prove sull’AP tramite UISP (simulato)', () => {
   it('keeps a channel that is really better', async () => {
     const { opt, fake, sent, runOf } = setup((c) => three(c === 5300 ? 130 : 100));
