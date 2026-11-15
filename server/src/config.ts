@@ -33,6 +33,8 @@ const envSchema = z.object({
   FIRMWARE_DIR: z.string().optional(),
   // Acceptance-test photos (default: 'photos' next to the database).
   PHOTOS_DIR: z.string().optional(),
+  /** «Manuali e documentazione»: the PDFs uploaded from the console (next to the database by default). */
+  DOCS_DIR: z.string().optional(),
   // Protomaps basemap (default: maps/basemap.pmtiles next to the database).
   MAP_FILE: z.string().optional(),
   // Requests to the updater agent (infrastructure settings), shared through the data volume.
@@ -163,6 +165,7 @@ export interface Config {
   crowdsec: { url: string; apiKey: string };
   dbPath: string;
   photosDir: string;
+  docsDir: string;
   firmwareDir: string;
   /** IEEE OUI registries cache (MAC vendors). */
   ouiDir: string;
@@ -298,6 +301,7 @@ export function loadConfig(source: NodeJS.ProcessEnv = process.env, masterKey?: 
     mapFile: e.MAP_FILE || (e.DB_PATH === ':memory:' ? join(tmpdir(), `cdanet-map-${process.pid}.pmtiles`) : join(dirname(e.DB_PATH), 'maps', 'basemap.pmtiles')),
     infraDir: e.INFRA_DIR || (e.DB_PATH === ':memory:' ? join(tmpdir(), `cdanet-infra-${process.pid}`) : join(dirname(e.DB_PATH), 'infra')),
     firmwareDir: e.FIRMWARE_DIR || (e.DB_PATH === ':memory:' ? join(tmpdir(), `cdanet-firmware-${process.pid}`) : join(dirname(e.DB_PATH), 'firmware')),
+    docsDir: e.DOCS_DIR || (e.DB_PATH === ':memory:' ? join(tmpdir(), `cdanet-docs-${process.pid}`) : join(dirname(e.DB_PATH), 'docs')),
     photosDir: e.PHOTOS_DIR || (e.DB_PATH === ':memory:' ? join(tmpdir(), `cdanet-photos-${process.pid}`) : join(dirname(e.DB_PATH), 'photos')),
     staticDir: resolve(e.STATIC_DIR),
     masterKey: masterKey ?? loadMasterKey(e.SECRETS_KEY_FILE),
