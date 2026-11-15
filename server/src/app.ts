@@ -34,6 +34,7 @@ import { createAlbo, type Albo } from './services/albo.ts';
 import { alboRoutes } from './routes/albo.ts';
 import { createThreats, type Threats } from './services/threats.ts';
 import { threatsRoutes } from './routes/threats.ts';
+import { docsRoutes } from './routes/docs.ts';
 import { createNotifier, type Notifier } from './services/notify.ts';
 import { createTelegram } from './services/telegram.ts';
 import type { Uisp } from './services/uisp.ts';
@@ -413,6 +414,7 @@ export async function buildApp(
   outageRoutes(app, ctx);
   alboRoutes(app, ctx);
   threatsRoutes(app, ctx);
+  docsRoutes(app, ctx);
   mapRoutes(app, ctx);
   networkRoutes(app, ctx);
   pointingRoutes(app, ctx);

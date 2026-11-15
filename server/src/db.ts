@@ -977,6 +977,22 @@ const MIGRATIONS: Array<string | CodeMigration> = [
     checked_at TEXT NOT NULL
   );
   `,
+  // 53 · v1.39.0: «Manuali e documentazione» (Carmelo, 15/11/2026): PDFs uploaded by the admins
+  // (manuals, datasheets, suppliers' FAQ), kept on the server's disk, never in the repository
+  `
+  CREATE TABLE documents(
+    id INTEGER PRIMARY KEY,
+    title TEXT NOT NULL,
+    category TEXT NOT NULL DEFAULT '',
+    summary TEXT NOT NULL DEFAULT '',
+    filename TEXT NOT NULL,
+    size INTEGER NOT NULL,
+    sha256 TEXT NOT NULL UNIQUE,
+    created_at TEXT NOT NULL,
+    created_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    updated_at TEXT NOT NULL
+  );
+  `,
 ];
 
 export function openDatabase(path: string): Db {

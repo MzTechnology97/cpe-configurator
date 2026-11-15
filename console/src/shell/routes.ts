@@ -92,6 +92,7 @@ export const ROUTES: Array<Route | Group> = [
   { id: 'privacy', icon: 'lock', label: 'Informativa privacy', admin: true, react: () => import('../pages/Privacy').then((m) => m.Privacy) },
   { id: 'platform', icon: 'check_circle', label: 'Salute piattaforma', admin: true, react: () => import('../pages/Platform').then((m) => m.Platform) },
   { id: 'events', icon: 'manage_search', label: 'Registro attività', all: true, react: () => import('../pages/Events').then((m) => m.Events) },
+  { id: 'docs', icon: 'library_books', label: 'Manuali e documentazione', staff: true, react: () => import('../pages/Docs').then((m) => m.Docs) },
   { id: 'admin-guide', icon: 'menu_book', label: 'Guida amministratore', staff: true, react: () => import('../pages/Guide').then((m) => m.Guide) },
   // the components of the console in both themes (admins): to check the look at a glance
   { id: 'ui', icon: 'handyman', label: 'Componenti', admin: true, hidden: true, react: () => import('../pages/UiShowcase').then((m) => m.UiShowcase) },
