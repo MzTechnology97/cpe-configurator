@@ -924,6 +924,23 @@ const MIGRATIONS: Array<string | CodeMigration> = [
     until TEXT
   );
   `,
+  // 51 · v1.37.0: «Albo e permessi» (Carmelo, 15/11/2026): the acts read from the albo pretorio and
+  // the calls for tenders of the chosen municipalities; [keywords] empty = read but without the words
+  `
+  CREATE TABLE albo_items(
+    id TEXT PRIMARY KEY,
+    source_id TEXT NOT NULL,
+    comune TEXT NOT NULL,
+    kind TEXT NOT NULL CHECK(kind IN('albo','bandi')),
+    title TEXT NOT NULL,
+    url TEXT NOT NULL DEFAULT '',
+    published_at TEXT,
+    keywords TEXT NOT NULL DEFAULT '',
+    first_seen TEXT NOT NULL,
+    notified INTEGER NOT NULL DEFAULT 0
+  );
+  CREATE INDEX albo_items_seen ON albo_items(first_seen);
+  `,
 ];
 
 export function openDatabase(path: string): Db {

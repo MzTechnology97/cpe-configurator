@@ -23,6 +23,7 @@ export const MODULES = [
   { key: 'network_tools', label: 'Strumenti di rete', area: 'app', description: 'Ping, traceroute, DNS, discovery, SNMP, TVCC, speed test, Wi-Fi analyzer.', default: true },
   { key: 'routeros', label: 'MikroTik · RouterOS', area: 'web + app', description: 'Consultazione in sola lettura di apparati RouterOS.', default: true },
   { key: 'power_outages', label: 'Guasti Enel', area: 'web + app', description: 'Guasti e lavori e-distribuzione nelle zone di interesse e attorno agli AP, con notifiche Telegram e sull’app.', default: false },
+  { key: 'albo', label: 'Albo e permessi', area: 'web', description: 'Albo pretorio e bandi dei comuni scelti: gli atti su scavi per la fibra, antenne, telecomunicazioni e connettività arrivano al NOC (pagina Notifiche e Telegram).', default: false, global: true },
   { key: 'network_status', label: 'Stato rete', area: 'web + app', description: 'Stato di POP e AP (raggiungibili, CPE offline, guasti Enel vicini): installatori solo quelli assegnati, senza notifiche.', default: false },
   { key: 'work_orders', label: 'Agenda interventi', area: 'web + app', description: 'Interventi assegnati dall’ufficio con cliente, indirizzo e PPPoE già compilati: l’installatore li trova in Oggi e li avvia con un tocco.', default: true },
   { key: 'firmware_upgrade', label: 'Aggiornamento firmware', area: 'web + app', description: 'L’admin carica i firmware airOS di riferimento; l’installatore li scarica sul telefono e porta la CPE alla versione richiesta prima del provisioning.', default: false },

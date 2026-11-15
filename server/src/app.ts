@@ -30,6 +30,8 @@ import { createGeocoder } from './services/geocode.ts';
 import { createModules } from './services/modules.ts';
 import { createOui } from './services/oui.ts';
 import { createOutages, type Outages } from './services/outages.ts';
+import { createAlbo, type Albo } from './services/albo.ts';
+import { alboRoutes } from './routes/albo.ts';
 import { createNotifier, type Notifier } from './services/notify.ts';
 import { createTelegram } from './services/telegram.ts';
 import type { Uisp } from './services/uisp.ts';
@@ -190,6 +192,7 @@ export async function buildApp(
     modules,
     oui,
     outages: undefined as unknown as Outages,
+    albo: undefined as unknown as Albo,
     serverSettings,
     dem,
     terrain: createTerrainStore({ dir: cfg.terrainDir, dem, ...(opts.fetchImpl ? { fetchImpl: opts.fetchImpl } : {}) }),
@@ -232,6 +235,15 @@ export async function buildApp(
     onChange: () => ctx.live.publish('outages', 'all'),
     offGridPops: () => ctx.victronSync?.offGridPops() ?? new Set(),
   });
+  ctx.albo = createAlbo(db, {
+    ...(opts.fetchImpl ? { fetchImpl: opts.fetchImpl } : {}),
+    isOn: () => modules.enabled('albo'),
+    notice: (title, lines) => ctx.notify.inbox.push('noc', { kind: 'albo', title, lines }),
+    group: (html) => {
+      if (modules.enabled('telegram')) void telegram.notify('albo', html);
+    },
+    log: (m) => pushLog(m),
+  });
   ctx.notify = createNotifier(db, cfg, telegram, () => ctx.uisp, version, () => modules.enabled('telegram'), undefined, (ids, n) => {
     ctx.live.publish('notifications', ids);
     // to the phones at once (Firebase); the reminders of the work orders are scheduled by the app itself
@@ -258,6 +270,14 @@ export async function buildApp(
         read: () => {
           if (!modules.enabled('power_outages')) return null;
           const s = ctx.outages.status();
+          return s ? { at: s.ok ? s.at : null, error: s.ok ? null : (s.error ?? 'errore') } : { at: null, error: null };
+        },
+      },
+      {
+        id: 'albo', label: 'Albo e permessi (comuni)', everyMin: 60, lateMin: 3 * 60,
+        read: () => {
+          if (!modules.enabled('albo') || !ctx.albo.config().sources.length) return null;
+          const s = ctx.albo.status();
           return s ? { at: s.ok ? s.at : null, error: s.ok ? null : (s.error ?? 'errore') } : { at: null, error: null };
         },
       },
@@ -369,6 +389,7 @@ export async function buildApp(
   replaceRoutes(app, ctx);
   statsRoutes(app, ctx);
   outageRoutes(app, ctx);
+  alboRoutes(app, ctx);
   mapRoutes(app, ctx);
   networkRoutes(app, ctx);
   pointingRoutes(app, ctx);
