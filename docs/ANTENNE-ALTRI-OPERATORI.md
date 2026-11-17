@@ -47,5 +47,5 @@ Facoltativo, nel `.env`:
 
 ## Cosa non c'è (ancora)
 
-- **Le BTS di Eolo** non sono pubbliche: si vedono solo dal portale per i rivenditori. Si aggiungono a mano, oppure in un secondo momento dal portale, se CDA Net ha un account.
+- **Le BTS di Eolo** non sono pubbliche: si vedono solo dal portale per i rivenditori, e CDA Net non ha un account. Si aggiungono a mano quando le conosciamo (sopralluoghi, tecnici, clienti).
 - **La copertura AGCOM per comune** (Broadband Map, dati aperti) arriverà quando avremo un file d'esempio per leggerne le colonne.

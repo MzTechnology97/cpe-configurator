@@ -1014,6 +1014,36 @@ const MIGRATIONS: Array<string | CodeMigration> = [
   CREATE INDEX operator_sites_pos ON operator_sites(lat, lon);
   CREATE INDEX operator_sites_source ON operator_sites(source, operator);
   `,
+  // 55 · v1.41.0: «Servizi OTT e CDN» (Carmelo, 15/11/2026): our own free «Downdetector», the
+  // services probed every minute from our network and their official status pages
+  `
+  CREATE TABLE ott_services(
+    id INTEGER PRIMARY KEY,
+    name TEXT NOT NULL,
+    category TEXT NOT NULL,
+    probe_url TEXT NOT NULL,
+    status_kind TEXT NOT NULL DEFAULT 'none',
+    status_url TEXT NOT NULL DEFAULT '',
+    enabled INTEGER NOT NULL DEFAULT 1,
+    sort INTEGER NOT NULL DEFAULT 0,
+    state TEXT NOT NULL DEFAULT 'sconosciuto',
+    since TEXT,
+    last_ms INTEGER,
+    baseline_ms INTEGER,
+    official TEXT NOT NULL DEFAULT 'sconosciuto',
+    official_text TEXT NOT NULL DEFAULT '',
+    checked_at TEXT
+  );
+  CREATE TABLE ott_samples(
+    service_id INTEGER NOT NULL REFERENCES ott_services(id) ON DELETE CASCADE,
+    at TEXT NOT NULL,
+    ok INTEGER NOT NULL,
+    ms INTEGER,
+    code TEXT NOT NULL DEFAULT ''
+  );
+  CREATE INDEX ott_samples_service ON ott_samples(service_id, at);
+  CREATE INDEX ott_samples_at ON ott_samples(at);
+  `,
 ];
 
 export function openDatabase(path: string): Db {

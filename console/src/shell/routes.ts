@@ -72,6 +72,7 @@ export const ROUTES: Array<Route | Group> = [
   { id: 'outages', icon: 'power_off', label: 'Guasti Enel', module: 'power_outages', react: () => import('../pages/Outages').then((m) => m.Outages) },
   { id: 'threats', icon: 'shield', label: 'Minacce', admin: true, module: 'threats', react: () => import('../pages/Threats').then((m) => m.Threats) },
   { id: 'albo', icon: 'cell_tower', label: 'Albo e permessi', all: true, module: 'albo', react: () => import('../pages/Albo').then((m) => m.Albo) },
+  { id: 'ott', icon: 'live_tv', label: 'Servizi OTT e CDN', staff: true, module: 'ott_monitor', react: () => import('../pages/OttMonitor').then((m) => m.OttMonitor) },
   { id: 'network', icon: 'hub', label: 'Stato rete', module: 'network_status', react: () => import('../pages/Network').then((m) => m.Network) },
   { id: 'ia-ap', icon: 'troubleshoot', label: 'IA-AP', all: true, react: () => import('../pages/Advisor').then((m) => m.Advisor) },
   { id: 'mytemplates', icon: 'memory', label: 'Template disponibili', installer: true, react: () => import('../pages/MyTemplates').then((m) => m.MyTemplates) },

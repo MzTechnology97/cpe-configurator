@@ -41,6 +41,7 @@ const KIND: Record<string, { icon: string; tone: string }> = {
   stock_mismatch: { icon: 'inventory', tone: 'warn' },
   albo: { icon: 'cell_tower', tone: 'info' },
   threats: { icon: 'shield', tone: 'bad' },
+  ott: { icon: 'live_tv', tone: 'warn' },
 };
 /** Notifications of IA-AP open its page, those of work orders Interventi, the others the history of the installation. */
 const IA_AP = new Set(['network_advice', 'network_optimizer']);
@@ -137,7 +138,7 @@ export function Notifications({ user }: PageContext) {
               <ul className="nt-list">
                 {ns.map((n) => {
                   const k = KIND[n.kind] ?? { icon: 'notifications', tone: 'neutral' };
-                  const href = n.kind === 'screenshot_attempt' ? '#/events' : n.kind === 'albo' ? '#/albo' : n.kind === 'threats' ? '#/threats' : n.kind === 'stock_mismatch' ? '#/warehouse' : IA_AP.has(n.kind) ? '#/ia-ap' : n.kind.startsWith('work_order') ? '#/work-orders' : n.mac ? `#/jobs?q=${encodeURIComponent(n.mac)}` : '#/jobs';
+                  const href = n.kind === 'screenshot_attempt' ? '#/events' : n.kind === 'albo' ? '#/albo' : n.kind === 'threats' ? '#/threats' : n.kind === 'ott' ? '#/ott' : n.kind === 'stock_mismatch' ? '#/warehouse' : IA_AP.has(n.kind) ? '#/ia-ap' : n.kind.startsWith('work_order') ? '#/work-orders' : n.mac ? `#/jobs?q=${encodeURIComponent(n.mac)}` : '#/jobs';
                   return (
                     <li key={n.id} className={`nt-item ui-tone-${k.tone}${n.readAt ? '' : ' unread'}`}>
                       <span className="nt-icon">
@@ -151,7 +152,7 @@ export function Notifications({ user }: PageContext) {
                         {n.body && <p className="nt-body">{n.body}</p>}
                         <div className="ui-row">
                           <a className="ui-btn ui-btn-ghost nt-open" href={href} onClick={() => !n.readAt && read.mutate({ ids: [n.id] })}>
-                            {n.kind === 'screenshot_attempt' ? 'Apri il registro attività' : n.kind === 'albo' ? 'Apri Albo e permessi' : n.kind === 'threats' ? 'Apri Minacce' : n.kind === 'stock_mismatch' ? 'Apri il magazzino' : IA_AP.has(n.kind) ? 'Apri IA-AP' : n.kind.startsWith('work_order') ? 'Apri gli interventi' : 'Apri nello storico'}
+                            {n.kind === 'screenshot_attempt' ? 'Apri il registro attività' : n.kind === 'albo' ? 'Apri Albo e permessi' : n.kind === 'threats' ? 'Apri Minacce' : n.kind === 'ott' ? 'Apri Servizi OTT e CDN' : n.kind === 'stock_mismatch' ? 'Apri il magazzino' : IA_AP.has(n.kind) ? 'Apri IA-AP' : n.kind.startsWith('work_order') ? 'Apri gli interventi' : 'Apri nello storico'}
                           </a>
                           {!n.readAt && (
                             <Button variant="ghost" onClick={() => read.mutate({ ids: [n.id] })}>
