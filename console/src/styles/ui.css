@@ -586,6 +586,8 @@ button.ui-stat:hover { border-color: var(--line-strong); }
 .mcp-url { display: flex; flex-wrap: wrap; gap: var(--sp-2); align-items: center; }
 .mcp-url code { flex: 1 1 260px; min-width: 0; padding: var(--sp-2) var(--sp-3); border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface-2); }
 .mcp-pre { margin: 0; padding: var(--sp-3); border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface-2); font-family: var(--font-mono); font-size: var(--fs-sm); overflow: auto; max-width: 100%; white-space: pre; }
+/* Assistente AI: the command an AI asks to run is read in full before allowing it, never scrolled away. */
+.ai-cmd { white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; max-height: 40vh; }
 .mcp-group { display: grid; gap: var(--sp-1); padding: var(--sp-2) 0; border-bottom: 1px solid var(--line); }
 .mcp-group h3 { margin: 0; font-size: 1rem; }
 .mcp-tools { margin: 0; padding-left: 1.2em; columns: 2 240px; }

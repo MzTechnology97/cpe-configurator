@@ -29,4 +29,5 @@ export const keys = {
   customers: (q: string) => ['customers', q] as const,
   advisor: ['advisor'] as const,
   outages: ['outages'] as const,
+  ai: ['ai'] as const,
 };

@@ -24,6 +24,7 @@ export const NOTIFY_KINDS = {
   ott: { label: 'Servizi OTT e CDN: un servizio irraggiungibile o lento dalla nostra rete, guasti dichiarati, molti servizi giù insieme', audience: 'noc', telegram: true },
   threats: { label: 'Minacce: nostri domini, IP, email o fornitori trovati su ransomware.live', audience: 'noc', telegram: true },
   albo: { label: 'Albo e permessi: atti su reti e bandi nei comuni scelti (scavi, antenne, telecomunicazioni, connettività)', audience: 'noc', telegram: true },
+  ai_permission: { label: 'Assistente AI: un’AI su un tuo PC chiede il permesso per un comando (mai il comando nel messaggio)', audience: 'noc', telegram: true },
   proactive: { label: 'Avvisi proattivi: segnale delle CPE in calo, AP vicini alla saturazione, POP a batteria', audience: 'noc', telegram: true },
 } as const;
 export type NotifyKind = keyof typeof NOTIFY_KINDS;

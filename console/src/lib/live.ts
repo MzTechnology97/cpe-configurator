@@ -7,6 +7,7 @@ const REFRESH: Record<string, ReadonlyArray<readonly string[]>> = {
   notifications: [keys.notifications],
   advisor: [keys.advisor],
   outages: [keys.outages, keys.network],
+  ai: [keys.ai],
 };
 
 /**

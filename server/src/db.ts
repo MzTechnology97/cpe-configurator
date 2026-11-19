@@ -1044,6 +1044,46 @@ const MIGRATIONS: Array<string | CodeMigration> = [
   CREATE INDEX ott_samples_service ON ott_samples(service_id, at);
   CREATE INDEX ott_samples_at ON ott_samples(at);
   `,
+  // 56 · v1.42.0: «Assistente AI» (Carmelo, 19/11/2026): the agents next to Continuity on the PCs
+  // (token as SHA-256, bound to an admin like the MCP service tokens) and the permission requests of
+  // the AIs, allowed or denied by that admin. Requests are deleted after 30 days.
+  `
+  CREATE TABLE ai_agents(
+    id INTEGER PRIMARY KEY,
+    name TEXT NOT NULL,
+    user_id INTEGER NOT NULL REFERENCES users(id),
+    token_version INTEGER NOT NULL,
+    token_hash TEXT NOT NULL UNIQUE,
+    created_at TEXT NOT NULL,
+    created_ip TEXT NOT NULL DEFAULT '',
+    expires_at TEXT NOT NULL,
+    revoked_at TEXT,
+    revoked_by INTEGER,
+    last_seen_at TEXT,
+    last_ip TEXT NOT NULL DEFAULT '',
+    agent_version TEXT NOT NULL DEFAULT '',
+    sessions TEXT NOT NULL DEFAULT '[]'
+  );
+  CREATE TABLE ai_permission_requests(
+    id INTEGER PRIMARY KEY,
+    agent_id INTEGER NOT NULL REFERENCES ai_agents(id) ON DELETE CASCADE,
+    ref TEXT NOT NULL,
+    session_ref TEXT NOT NULL DEFAULT '',
+    ai TEXT NOT NULL DEFAULT '',
+    tool TEXT NOT NULL,
+    detail TEXT NOT NULL DEFAULT '',
+    local_only INTEGER NOT NULL DEFAULT 0,
+    state TEXT NOT NULL DEFAULT 'pending',
+    created_at TEXT NOT NULL,
+    expires_at TEXT NOT NULL,
+    decided_at TEXT,
+    decided_by INTEGER,
+    delivered_at TEXT,
+    UNIQUE(agent_id, ref)
+  );
+  CREATE INDEX ai_requests_state ON ai_permission_requests(state, expires_at);
+  CREATE INDEX ai_requests_agent ON ai_permission_requests(agent_id, state);
+  `,
 ];
 
 export function openDatabase(path: string): Db {

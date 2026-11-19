@@ -29,6 +29,7 @@ Ogni modifica finisce nel Registro attività ("Funzionalità modificate").
 | Agenda interventi | web + app | attivo: interventi assegnati dall'ufficio, calendario, vedi [NOC.md](NOC.md#interventi-e-calendario) |
 | **Aggiornamento firmware** | web + app | **spento**: firmware airOS di riferimento caricati dall'admin e portati sulla CPE dall'app |
 | **Screenshot nell'app** | app | **spento**: l'app blocca screenshot e registrazione dello schermo; gli admin possono sempre, per installatori e partner si attiva account per account |
+| **Assistente AI** | web + app | **spento**: le AI sui PC con Continuity chiedono il permesso per i comandi, l’admin proprietario dell’agente consente o nega, vedi [ASSISTENTE-AI.md](ASSISTENTE-AI.md) |
 | Notifiche Telegram | server | attivo (se configurate in Connettori), vale per tutti |
 
 ## Moduli per singolo utente
