@@ -2,7 +2,9 @@
 
 Modulo **spento di default** (Amministrazione → Funzionalità → «Assistente AI»).
 
-Le AI (Claude Code, Codex e le altre) lavorano sui PC con **Continuity**, nel fork indurito di CDA Net. Quando un'AI chiede il permesso per un comando, la richiesta arriva alla piattaforma. L'amministratore che possiede quel PC la **nega** con un tocco o la **consente** con un codice di verifica nuovo, dalla console (Amministrazione → **Assistente AI**). La schermata nell'app Android arriverà in una versione successiva.
+Le AI (Claude Code, Codex e le altre) lavorano sui PC con **Continuity**, nel fork indurito di CDA Net. Quando un'AI chiede il permesso per un comando, la richiesta arriva alla piattaforma. L'amministratore che possiede quel PC la **nega** con un tocco o la **consente**:
+- dalla console (Amministrazione → **Assistente AI**), con un codice di verifica nuovo;
+- dall'**app Android** (Rete → **Assistente AI**), con l'**impronta o il volto**, oppure con il codice.
 
 ```
 PC (utente Windows dedicato alle AI)                     Piattaforma                        Admin
@@ -14,6 +16,7 @@ Continuity ←127.0.0.1→ agente ──HTTPS, in uscita──▶  /api/ai-agent
 - **Il PC non apre porte.** L'agente si collega lui alla piattaforma, come il CRM interno con il token di servizio. Non servono VPN né port forwarding.
 - **Il server non comanda il PC.** Non avvia sessioni, non manda prompt né comandi: può solo rispondere *sì* o *no* a una richiesta creata dall'agente. Anche con il server compromesso, il danno massimo è consentire un comando che l'AI aveva già chiesto.
 - **Comandi sensibili solo dal PC.** L'agente segna come «solo dal PC» quello che non si deve consentire da lontano: `git push` e `gh`, credenziali e `~/.ssh`, download da host sconosciuti, SSH verso gli apparati di rete. Da qui quei comandi si possono solo negare; la piattaforma rifiuta il «consenti» (`409 local_only`).
+- **Dall'app con l'impronta.** Il telefono usa la chiave del suo accesso rapido, che il Keystore libera solo dopo un'impronta o un volto **forti**, e la manda con la decisione. Il server controlla che la chiave sia di quell'admin e del telefono, valida e **non** «persistente». Un telefono con accesso persistente (si apre senza impronta) o con una biometria debole deve usare il codice. Nel Registro la decisione è segnata «(impronta)» o «(codice)».
 - **Conferma forte.** Negare: un tocco. Consentire: un **codice di verifica nuovo**, che vale una volta sola (anti-replay); va bene anche un codice di recupero. Dopo 5 codici sbagliati in 10 minuti si aspetta. Proprietario, stato e scadenza si controllano prima del codice, che non viene mai consumato per una decisione impossibile.
 - **Solo il proprietario decide e legge.** Ogni agente appartiene all'admin che l'ha creato. Gli altri admin vedono che c'è una richiesta, ma non il testo del comando, e non decidono.
 - **Scadenza.** Una richiesta senza risposta entro **10 minuti** vale «negata».
@@ -57,7 +60,7 @@ Continuity ←127.0.0.1→ agente ──HTTPS, in uscita──▶  /api/ai-agent
 | `POST /api/admin/ai/agents` | `{ name, code, days? }` → `{ id, name, token, expiresAt }`. |
 | `DELETE /api/admin/ai/agents/:id` | Revoca. |
 | `GET /api/admin/ai/requests?state=pending` | Richieste (`pending`, `allowed`, `denied`, `expired`). |
-| `POST /api/admin/ai/requests/:id/decision` | `{ allow: false }` oppure `{ allow: true, code }`. |
+| `POST /api/admin/ai/requests/:id/decision` | `{ allow: false }`, `{ allow: true, code }` oppure dall'app `{ allow: true, device: { id, secret } }` (chiave dell'accesso rapido sbloccata dall'impronta). |
 
 ## Privacy
 

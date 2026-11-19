@@ -161,4 +161,37 @@ describe('Assistente AI (modulo ai_assistant)', () => {
     assert.equal((await call('POST', `/api/admin/ai/requests/${one.id}/decision`, { allow: false })).statusCode, 200, 'deny still works');
     assert.equal((await call('POST', `/api/admin/ai/requests/${one.id}/decision`, { allow: true, code: '000000' })).statusCode, 409, 'checked before the code');
   });
+
+  it('from the app: allow with the phone key unlocked by a strong fingerprint, never with a persistent phone', async () => {
+    const { t, call, code, H } = await setup();
+    const ANDROID = { 'x-cda-client': 'android/1.42.0' };
+    await call('PUT', '/api/admin/modules', { ai_assistant: true });
+    const { token } = (await call('POST', '/api/admin/ai/agents', { name: 'PC ufficio', code: code() })).json();
+    const A = { authorization: `Bearer ${token}` };
+    // a fresh session with the password (and code) registers the phone
+    const fresh = (await call('POST', '/api/auth/login', { username: ADMIN.username, password: ADMIN.password }, {})).json();
+    const S = fresh.token ? { authorization: `Bearer ${fresh.token}`, ...ANDROID } : null;
+    const sess = S ?? { ...H, ...ANDROID };
+    const reg = await call('POST', '/api/auth/devices', { name: 'Telefono admin' }, sess);
+    const pers = await call('POST', '/api/auth/devices', { name: 'Tablet' , persistent: true }, sess);
+    if (reg.statusCode !== 201 || pers.statusCode !== 201) {
+      // login with TOTP on needs the code step: the session of setup() is fresh enough
+      assert.fail(`device registration: ${reg.statusCode} ${reg.body} / ${pers.statusCode}`);
+    }
+    const dev = reg.json();
+    const tab = pers.json();
+    const r1 = (await call('POST', '/api/ai-agent/requests', { ref: 'a1', tool: 'Bash', detail: 'npm test' }, A)).json();
+    const r2 = (await call('POST', '/api/ai-agent/requests', { ref: 'a2', tool: 'Bash', detail: 'npm run build' }, A)).json();
+    assert.equal((await call('POST', `/api/admin/ai/requests/${r1.id}/decision`, { allow: true, device: { id: tab.id, secret: tab.secret } })).json().error, 'invalid_device', 'persistent phone: no');
+    assert.equal((await call('POST', `/api/admin/ai/requests/${r1.id}/decision`, { allow: true, device: { id: dev.id, secret: 'x'.repeat(43) } })).json().error, 'invalid_device');
+    const ok = await call('POST', `/api/admin/ai/requests/${r1.id}/decision`, { allow: true, device: { id: dev.id, secret: dev.secret } });
+    assert.equal(ok.statusCode, 200, ok.body);
+    assert.equal(ok.json().state, 'allowed');
+    const log = t.db.prepare("SELECT detail FROM events WHERE action = 'ai.request.allow'").get() as { detail: string };
+    assert.match(log.detail, /impronta/);
+    // the phone of another account never decides for this admin
+    await call('POST', '/api/admin/users', { username: 'altro', password: 'Altro-Admin-Pass-1', role: 'admin' });
+    t.db.prepare('UPDATE auth_devices SET user_id = (SELECT id FROM users WHERE username = ?) WHERE id = ?').run('altro', dev.id);
+    assert.equal((await call('POST', `/api/admin/ai/requests/${r2.id}/decision`, { allow: true, device: { id: dev.id, secret: dev.secret } })).json().error, 'invalid_device');
+  });
 });

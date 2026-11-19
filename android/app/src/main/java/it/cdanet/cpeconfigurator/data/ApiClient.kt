@@ -403,6 +403,28 @@ class ApiClient(
     /** «Albo e permessi» (admins): reads every list now. */
     suspend fun alboCheck(): AlboStatusDto = AppJson.decodeFromString(AlboStatusDto.serializer(), request("POST", "/api/admin/albo/check", buildJsonObject {}))
 
+    /** «Assistente AI» (admins): the permission requests of the AIs on the PCs. */
+    suspend fun aiRequests(state: String = "pending"): AiRequestsDto =
+        AppJson.decodeFromString(AiRequestsDto.serializer(), request("GET", "/api/admin/ai/requests?state=$state"))
+
+    /**
+     * Deny (nothing else needed) or allow: with the phone's quick-login key, unlocked by a strong
+     * fingerprint or face ([deviceId] + [secret]), or with a fresh second-step [code].
+     */
+    suspend fun aiDecide(id: Long, allow: Boolean, code: String? = null, deviceId: String? = null, secret: String? = null): AiRequestDto =
+        AppJson.decodeFromString(
+            AiRequestDto.serializer(),
+            request(
+                "POST",
+                "/api/admin/ai/requests/$id/decision",
+                buildJsonObject {
+                    put("allow", allow)
+                    if (allow && deviceId != null && secret != null) put("device", buildJsonObject { put("id", deviceId); put("secret", secret) })
+                    else if (allow && code != null) put("code", code)
+                },
+            ),
+        )
+
     /** IA-AP (admins): findings on APs and CPEs. */
     suspend fun advisor(): AdvisorDto = AppJson.decodeFromString(AdvisorDto.serializer(), request("GET", "/api/admin/advisor"))
 

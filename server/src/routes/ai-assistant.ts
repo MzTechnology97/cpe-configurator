@@ -1,3 +1,4 @@
+import { createHash, timingSafeEqual } from 'node:crypto';
 import type { FastifyInstance, FastifyRequest } from 'fastify';
 import { z } from 'zod';
 import { HttpError } from '../auth.ts';
@@ -75,6 +76,29 @@ export function aiAssistantRoutes(app: FastifyInstance, ctx: AppContext) {
     return u;
   }
 
+  /**
+   * The app's alternative to the code: the phone's quick-login key, which the app unlocks only with
+   * a STRONG fingerprint or face (keystore key bound to the biometric prompt). Never a «persistent»
+   * phone (it opens with no prompt); same anti-guessing count as the codes.
+   */
+  function freshDevice(userId: number, device: { id: string; secret: string }) {
+    const now = Date.now();
+    const failed = (codeFailures.get(userId) ?? []).filter((t) => t > now - 10 * 60_000);
+    if (failed.length >= CODE_FAILURES) throw new HttpError(429, 'too_many_code_attempts');
+    const d = db
+      .prepare('SELECT d.user_id, d.secret_hash, d.token_version, d.expires_at, d.persistent, u.token_version tv, u.active, u.role, u.totp_enabled FROM auth_devices d JOIN users u ON u.id = d.user_id WHERE d.id = ?')
+      .get(device.id) as { user_id: number; secret_hash: string; token_version: number; expires_at: string | null; persistent: number; tv: number; active: number; role: string; totp_enabled: number } | undefined;
+    const hash = createHash('sha256').update(device.secret).digest('hex');
+    const ok =
+      !!d && d.user_id === userId && !d.persistent && !!d.active && d.role === 'admin' && !!d.totp_enabled && d.token_version === d.tv &&
+      (!d.expires_at || d.expires_at > new Date(now).toISOString()) && timingSafeEqual(Buffer.from(hash), Buffer.from(d.secret_hash));
+    if (!ok) {
+      codeFailures.set(userId, [...failed, now]);
+      throw new HttpError(401, 'invalid_device');
+    }
+    codeFailures.delete(userId);
+  }
+
   // ---- the agent on the PC
   const agentRoute = { preHandler: [moduleOn], bodyLimit: 16 * 1024 };
 
@@ -140,12 +164,18 @@ export function aiAssistantRoutes(app: FastifyInstance, ctx: AppContext) {
   /** Deny: one tap. Allow: a fresh second-step code; never for a request the PC keeps for itself. */
   app.post('/api/admin/ai/requests/:id/decision', admin, async (req) => {
     const id = z.coerce.number().int().positive().parse((req.params as { id: string }).id);
-    const b = z.object({ allow: z.boolean(), code: z.string().max(12).optional() }).strict().parse(req.body ?? {});
+    const b = z
+      .object({ allow: z.boolean(), code: z.string().max(12).optional(), device: z.object({ id: z.string().uuid(), secret: z.string().min(20).max(100) }).strict().optional() })
+      .strict()
+      .parse(req.body ?? {});
     // owner, state, time and «local only» first: a code is never spent on a decision that cannot happen
     ai.precheck(id, req.user!.id, b.allow);
-    if (b.allow) freshCode(req.user!.id, b.code);
+    if (b.allow) {
+      if (b.device) freshDevice(req.user!.id, b.device);
+      else freshCode(req.user!.id, b.code);
+    }
     const r = ai.decide(id, req.user!.id, b.allow);
-    recordEvent(db, req.user!.id, b.allow ? 'ai.request.allow' : 'ai.request.deny', String(id), `${r.agent}: ${r.tool.slice(0, 120)}`);
+    recordEvent(db, req.user!.id, b.allow ? 'ai.request.allow' : 'ai.request.deny', String(id), `${r.agent}: ${r.tool.slice(0, 120)}${b.allow ? (b.device ? ' (impronta)' : ' (codice)') : ''}`);
     return r;
   });
 }
