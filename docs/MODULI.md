@@ -30,6 +30,7 @@ Ogni modifica finisce nel Registro attività ("Funzionalità modificate").
 | **Aggiornamento firmware** | web + app | **spento**: firmware airOS di riferimento caricati dall'admin e portati sulla CPE dall'app |
 | **Screenshot nell'app** | app | **spento**: l'app blocca screenshot e registrazione dello schermo; gli admin possono sempre, per installatori e partner si attiva account per account |
 | **Assistente AI** | web + app | **spento**: le AI sui PC con Continuity chiedono il permesso per i comandi, l’admin proprietario dell’agente consente o nega, vedi [ASSISTENTE-AI.md](ASSISTENTE-AI.md) |
+| **Conoscenza AI** | web | **spento**: le memorie di lavoro condivise dalle AI (profilo, decisioni, progetti, playbook), lette ogni ora dal repository privato con un token in sola lettura; le vede chi ha visibilità piena e Claude con lo strumento `memorie_cdanet`, vedi [ASSISTENTE-AI.md](ASSISTENTE-AI.md#conoscenza-ai) |
 | Notifiche Telegram | server | attivo (se configurate in Connettori), vale per tutti |
 
 ## Moduli per singolo utente

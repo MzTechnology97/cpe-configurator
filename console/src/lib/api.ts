@@ -95,6 +95,7 @@ const MESSAGES: Record<string, string> = {
   already_decided: 'Richiesta già decisa o scaduta',
   local_only: 'Comando sensibile: si consente solo sul PC, davanti allo schermo',
   too_many_code_attempts: 'Troppi codici sbagliati: riprova tra qualche minuto',
+  memory_file_not_found: 'File non trovato: forse è stato scartato o tolto dal repository',
   mfa_setup_required: 'Attiva la verifica in due passaggi in "Il mio account"',
   totp_required_by_policy: 'Obbligatoria per gli amministratori: non si può disattivare',
   totp_setup_missing: 'Ricomincia l’attivazione',

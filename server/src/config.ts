@@ -141,6 +141,11 @@ const envSchema = z.object({
   OPENCELLID_NETS: z.string().max(400).default('88:WindTre,99:WindTre'),
   /** Il riquadro da tenere: sud,ovest,nord,est (di default la Sicilia). */
   OPENCELLID_BBOX: z.string().max(80).default('36.5,12.0,38.4,15.8'),
+  /** «Conoscenza AI» (modulo ai_memory): token GitHub fine-grained in SOLA LETTURA (Contents: read) su un solo repository privato. */
+  AI_HUB_TOKEN: optionalText(300),
+  AI_HUB_REPO: z.string().regex(/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/).default('cdanet-as200034/cdanet-as200034-continuity-hardened'),
+  AI_HUB_REF: z.string().regex(/^[A-Za-z0-9_./-]{1,100}$/).default('main'),
+  AI_HUB_API: z.string().url().default('https://api.github.com'),
 
   ROUTEROS_ALLOW_PUBLIC: z.enum(['0', '1']).default('0'),
 
@@ -257,6 +262,8 @@ export interface Config {
   crmSyncMinutes: number;
   ransomwareLive: { apiKey: string | undefined; url: string };
   openCellId: { token: string | undefined; url: string; nets: string; bbox: string };
+  /** «Conoscenza AI»: where the shared memories of the AIs are read (private repository, read-only token). */
+  aiHub: { token: string | undefined; repo: string; ref: string; api: string };
   routerOsAllowPublic: boolean;
   /** Android app always on the latest release: older apps get 426 on every call. */
   appForceLatest: boolean;
@@ -374,6 +381,7 @@ export function loadConfig(source: NodeJS.ProcessEnv = process.env, masterKey?: 
     crmSyncMinutes: e.CRM_SYNC_MINUTES,
     ransomwareLive: { apiKey: e.RANSOMWARE_LIVE_API_KEY, url: e.RANSOMWARE_LIVE_URL },
     openCellId: { token: e.OPENCELLID_TOKEN, url: e.OPENCELLID_URL, nets: e.OPENCELLID_NETS, bbox: e.OPENCELLID_BBOX },
+    aiHub: { token: e.AI_HUB_TOKEN, repo: e.AI_HUB_REPO, ref: e.AI_HUB_REF, api: e.AI_HUB_API },
     routerOsAllowPublic: e.ROUTEROS_ALLOW_PUBLIC === '1',
     appForceLatest: e.APP_FORCE_LATEST === '1',
     firmwareBypass: e.FIRMWARE_BYPASS === '1',

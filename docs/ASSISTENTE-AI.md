@@ -62,6 +62,33 @@ Continuity ←127.0.0.1→ agente ──HTTPS, in uscita──▶  /api/ai-agent
 | `GET /api/admin/ai/requests?state=pending` | Richieste (`pending`, `allowed`, `denied`, `expired`). |
 | `POST /api/admin/ai/requests/:id/decision` | `{ allow: false }`, `{ allow: true, code }` oppure dall'app `{ allow: true, device: { id, secret } }` (chiave dell'accesso rapido sbloccata dall'impronta). |
 
+## Conoscenza AI
+
+Modulo a parte (**Conoscenza AI**, spento di default). Le memorie di lavoro condivise dalle AI (profilo, decisioni, schede dei progetti, playbook per dominio) si scrivono e si rivedono in Git, nel repository privato `cdanet-as200034/cdanet-as200034-continuity-hardened`, cartelle `cdanet/hub/memorie/` e `cdanet/hub/playbook/`. Il server le legge ogni ora e ne tiene una copia: in console (**Conoscenza AI**, per chi ha visibilità piena) e per Claude con lo strumento MCP `memorie_cdanet`.
+
+Regole:
+- solo file `.md` in quelle due cartelle, al massimo 100 file da 64 KB;
+- un file che sembra contenere un segreto o un dato personale (chiavi, token, password, IBAN, codice fiscale, email personali, telefoni) viene **scartato**: non arriva né in console né a Claude, e il NOC riceve un avviso con il solo percorso e il motivo, mai il contenuto. Sono le stesse regole di `cdanet/hub/strumenti/controlla-segreti.mjs`, che gira anche nella CI del repository;
+- la copia si sostituisce tutta insieme; se GitHub non risponde resta quella di prima e la pagina mostra l'errore;
+- il server non scrive mai nel repository.
+
+### Il token (una volta, poi ogni anno)
+
+1. GitHub → **Settings → Developer settings → Personal access tokens → Fine-grained tokens → Generate new token**.
+2. **Resource owner**: `cdanet-as200034`. **Repository access**: *Only select repositories* → solo `cdanet-as200034-continuity-hardened`.
+3. **Permissions → Repository permissions → Contents: Read-only** (Metadata: Read-only si aggiunge da sola). Nient'altro.
+4. Scadenza: al massimo un anno, con un promemoria in agenda.
+5. Sul server, nel file `.env` (mai in chat, mai in un repository): `AI_HUB_TOKEN=…`. Facoltativi `AI_HUB_REPO`, `AI_HUB_REF` (default `main`). Riavvia il servizio.
+6. Console → **Amministrazione → Funzionalità** → accendi **Conoscenza AI**, poi **Conoscenza AI → Leggi adesso**.
+
+Se il token scade o viene revocato, la pagina dice «GitHub ha rifiutato il token»: la copia già letta resta disponibile.
+
+| Chiamata | Cosa |
+|---|---|
+| `GET /api/admin/ai/memory` | Stato della lettura (commit, ora, errori, file scartati) ed elenco dei file. Visibilità piena. |
+| `GET /api/admin/ai/memory/file?path=…` | Un file, come testo. Visibilità piena. |
+| `POST /api/admin/ai/memory/refresh` | Rilegge adesso (admin, finisce nel Registro). |
+
 ## Privacy
 
 Le richieste contengono il testo dei comandi chiesti dalle AI sui progetti, ripulito dei segreti. Non devono contenere dati dei clienti: il fork di Continuity tiene `.env`, credenziali, export degli apparati e dump dei database lontano dalle AI. La memoria dei comandi resta sul server per 30 giorni, poi si cancella.

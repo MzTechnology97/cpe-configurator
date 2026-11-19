@@ -30,6 +30,7 @@ ctx.threats.start();
 ctx.operatorSites.start();
 ctx.ottMonitor.start();
 ctx.aiAssistant.start();
+ctx.aiMemory.start();
 ctx.crmSync.start(cfg.crmSyncMinutes * 60_000);
 ctx.victronSync.start();
 ctx.warehouse.start();
@@ -58,6 +59,7 @@ const shutdown = async (signal: string) => {
   ctx.operatorSites.stop();
   ctx.ottMonitor.stop();
   ctx.aiAssistant.stop();
+  ctx.aiMemory.stop();
   ctx.crmSync.stop();
   ctx.victronSync.stop();
   ctx.warehouse.stop();

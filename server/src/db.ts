@@ -1084,6 +1084,18 @@ const MIGRATIONS: Array<string | CodeMigration> = [
   CREATE INDEX ai_requests_state ON ai_permission_requests(state, expires_at);
   CREATE INDEX ai_requests_agent ON ai_permission_requests(agent_id, state);
   `,
+  // 57 · v1.42.0: «Conoscenza AI»: the shared memories of the AIs (Markdown read from a private
+  // repository with a read-only token, files with secrets refused), shown in the console and to Claude.
+  `
+  CREATE TABLE ai_memory_files(
+    path TEXT PRIMARY KEY,
+    sha TEXT NOT NULL,
+    size INTEGER NOT NULL,
+    title TEXT NOT NULL DEFAULT '',
+    content TEXT NOT NULL,
+    fetched_at TEXT NOT NULL
+  );
+  `,
 ];
 
 export function openDatabase(path: string): Db {
