@@ -15,6 +15,13 @@ const RULES: Array<[RegExp, string]> = [
   [/\beyJ[A-Za-z0-9_-]{10,}\.eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}/g, '[jwt]'],
   [/\b(Bearer|Basic)\s+[A-Za-z0-9._~+/=-]{12,}/gi, '$1 [segreto]'],
   [/\b([a-z][a-z0-9+.-]*:\/\/)[^\s/:@]+:[^\s/@]+@/gi, '$1[credenziali]@'],
+  // variables like PGPASSWORD=, GITHUB_TOKEN=, AWS_SECRET_ACCESS_KEY=, DB_PASS=, MYSQL_PWD=
+  [/\b([A-Za-z0-9_]*(?:PASSWORD|PASSWD|PASS|PWD|SECRET|TOKEN|API_?KEY|ACCESS_KEY|PRIVATE_KEY|CREDENTIALS?)[A-Za-z0-9_]*\s*=\s*)("[^"]*"|'[^']*'|[^\s"'`;&|]+)/gi, '$1[segreto]'],
+  // curl -u user:pass, mysql -pSecret, sshpass -p secret, Authorization: token …
+  [/(\s-u\s+)[^\s:]+:\S+/g, '$1[credenziali]'],
+  [/(\bmysql(?:dump)?\b[^\n]*?\s-p)(?!\s)\S+/gi, '$1[segreto]'],
+  [/(\bsshpass\s+-p\s*)\S+/gi, '$1[segreto]'],
+  [/\b(Authorization:\s*(?:token|Bearer|Basic)\s+)\S+/gi, '$1[segreto]'],
   [/(--?(?:password|passwd|pass|token|secret|api[-_]?key|community)[= ])("[^"]*"|'[^']*'|[^\s"'`,;]+)/gi, '$1[segreto]'],
   [/\b(password|passwd|pwd|psk|secret|segreto|token|api[-_]?key|community)(\s*[:=]\s*)("[^"]*"|'[^']*'|[^\s"'`,;]+)/gi, '$1$2[segreto]'],
 ];

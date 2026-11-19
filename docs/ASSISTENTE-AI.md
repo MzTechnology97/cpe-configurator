@@ -14,8 +14,8 @@ Continuity ←127.0.0.1→ agente ──HTTPS, in uscita──▶  /api/ai-agent
 - **Il PC non apre porte.** L'agente si collega lui alla piattaforma, come il CRM interno con il token di servizio. Non servono VPN né port forwarding.
 - **Il server non comanda il PC.** Non avvia sessioni, non manda prompt né comandi: può solo rispondere *sì* o *no* a una richiesta creata dall'agente. Anche con il server compromesso, il danno massimo è consentire un comando che l'AI aveva già chiesto.
 - **Comandi sensibili solo dal PC.** L'agente segna come «solo dal PC» quello che non si deve consentire da lontano: `git push` e `gh`, credenziali e `~/.ssh`, download da host sconosciuti, SSH verso gli apparati di rete. Da qui quei comandi si possono solo negare; la piattaforma rifiuta il «consenti» (`409 local_only`).
-- **Conferma forte.** Negare: un tocco. Consentire: un **codice di verifica nuovo**, che vale una volta sola (anti-replay); va bene anche un codice di recupero.
-- **Solo il proprietario decide.** Ogni agente appartiene all'admin che l'ha creato; gli altri admin vedono le richieste ma non decidono.
+- **Conferma forte.** Negare: un tocco. Consentire: un **codice di verifica nuovo**, che vale una volta sola (anti-replay); va bene anche un codice di recupero. Dopo 5 codici sbagliati in 10 minuti si aspetta. Proprietario, stato e scadenza si controllano prima del codice, che non viene mai consumato per una decisione impossibile.
+- **Solo il proprietario decide e legge.** Ogni agente appartiene all'admin che l'ha creato. Gli altri admin vedono che c'è una richiesta, ma non il testo del comando, e non decidono.
 - **Scadenza.** Una richiesta senza risposta entro **10 minuti** vale «negata».
 - **Testo dell'AI.** Il comando arriva già ripulito dall'agente e il server lo ripulisce di nuovo: chiavi, token, password nelle opzioni e negli indirizzi diventano `[segreto]`. Al massimo 1.500 caratteri. Si mostra sempre come testo semplice, mai come HTML, con l'avviso che è scritto da un'AI e va letto prima di decidere.
 - **Notifiche** (tipo «Assistente AI»): solo all'admin proprietario, in Notifiche, come push sull'app e sul Telegram personale se attivo. Contengono il nome del PC e dello strumento, **mai il comando**. Il gruppo del NOC non riceve niente.
@@ -33,7 +33,7 @@ Continuity ←127.0.0.1→ agente ──HTTPS, in uscita──▶  /api/ai-agent
    - Sul server resta solo l'impronta SHA-256.
 3. **Quando cade:** il token smette di valere se l'admin viene disattivato, perde il ruolo, cambia password o toglie la verifica in due passaggi. Si revoca anche dalla lista «PC collegati»; le richieste in attesa diventano negate.
 4. **Limiti:**
-   - al massimo 5 agenti attivi;
+   - al massimo 5 agenti attivi per admin;
    - per agente, 20 richieste in attesa e 60 chiamate al minuto;
    - corpo di ogni chiamata fino a 16 KB.
 5. **Nuovo agente:** il NOC riceve un avviso di sicurezza su Telegram.
@@ -45,8 +45,9 @@ Continuity ←127.0.0.1→ agente ──HTTPS, in uscita──▶  /api/ai-agent
 | Chiamata | Cosa |
 |---|---|
 | `POST /api/ai-agent/hello` | `{ version, sessions: [{ ref, goal, ai, state, project }] }`: stato ridotto delle sessioni (al massimo 20), per la console. |
-| `POST /api/ai-agent/requests` | `{ ref, sessionRef?, ai?, tool, detail?, localOnly? }` → `{ id, ref, state, expiresAt }`. Lo stesso `ref` restituisce la stessa richiesta: l'agente può riprovare. |
-| `GET /api/ai-agent/decisions?wait=25` | Attesa lunga, al massimo 25 secondi. Restituisce `{ decisions: [{ ref, allow, state }] }`; ogni decisione arriva una volta sola. `expired` vale «no». |
+| `POST /api/ai-agent/requests` | `{ ref, sessionRef?, ai?, tool, detail?, localOnly? }`, dove `ref` e `tool` sono identificativi (`[A-Za-z0-9_.:-]`); il comando va solo in `detail` → `{ id, ref, state, expiresAt }`. Lo stesso `ref` restituisce la stessa richiesta: l'agente può riprovare. |
+| `GET /api/ai-agent/decisions?wait=25` | Attesa lunga, al massimo 25 secondi, e una sola alla volta per agente. Restituisce `{ decisions: [{ ref, allow, state }] }`. `expired` vale «no». Una decisione torna a ogni chiamata finché l'agente non la conferma, così una connessione caduta non la perde. |
+| `POST /api/ai-agent/decisions/ack` | `{ refs: [...] }`: le decisioni applicate; da quel momento non tornano più. Un `401` vuol dire token non più valido: l'agente nega tutto quello che aspettava. |
 
 **Amministratori** (verifica in due passaggi attiva):
 

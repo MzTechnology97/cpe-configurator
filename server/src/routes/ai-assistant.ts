@@ -12,7 +12,10 @@ const AGENT_CALLS_PER_MINUTE = 60;
 /** The longest a long poll waits for an answer. */
 const MAX_WAIT_S = 25;
 
-const ref = z.string().trim().min(1).max(80);
+/** Second-step codes that may be wrong per admin in 10 minutes on these pages. */
+const CODE_FAILURES = 5;
+/** Opaque references made by the agent: never cleaned or cut, so two of them never become one. */
+const ref = z.string().regex(/^[A-Za-z0-9_.:-]{1,80}$/);
 const session = z
   .object({ ref, goal: z.string().max(500).default(''), ai: z.string().max(60).default(''), state: z.string().max(40).default(''), project: z.string().max(200).default('') })
   .strict();
@@ -22,7 +25,8 @@ const request = z
     ref,
     sessionRef: z.string().max(80).default(''),
     ai: z.string().max(60).default(''),
-    tool: z.string().trim().min(1).max(300),
+    // a tool's name (Bash, Edit, mcp__server__tool), never free text: it reaches notifications and the log
+    tool: z.string().regex(/^[A-Za-z0-9_.:-]{1,60}$/),
     detail: z.string().max(6000).default(''),
     localOnly: z.boolean().default(false),
   })
@@ -41,6 +45,7 @@ export function aiAssistantRoutes(app: FastifyInstance, ctx: AppContext) {
   const moduleOn = ctx.modules.require('ai_assistant');
   const admin = { preHandler: [ctx.auth.requireAdmin, moduleOn] };
   const calls = new Map<number, number[]>();
+  const codeFailures = new Map<number, number[]>();
   const userRow = (id: number) => db.prepare('SELECT * FROM users WHERE id = ?').get(id) as AdminRow | undefined;
 
   /** The agent's token, its admin still valid, and its share of requests per minute. */
@@ -59,7 +64,14 @@ export function aiAssistantRoutes(app: FastifyInstance, ctx: AppContext) {
   function freshCode(userId: number, code: unknown) {
     const u = userRow(userId);
     if (!u || !u.active || u.role !== 'admin' || !u.totp_enabled) throw new HttpError(403, 'totp_required');
-    if (typeof code !== 'string' || !code.trim() || !checkSecondFactor(db, ctx.sealer, u, code.trim())) throw new HttpError(401, 'invalid_code');
+    const now = Date.now();
+    const failed = (codeFailures.get(userId) ?? []).filter((t) => t > now - 10 * 60_000);
+    if (failed.length >= CODE_FAILURES) throw new HttpError(429, 'too_many_code_attempts');
+    if (typeof code !== 'string' || !code.trim() || !checkSecondFactor(db, ctx.sealer, u, code.trim())) {
+      codeFailures.set(userId, [...failed, now]);
+      throw new HttpError(401, 'invalid_code');
+    }
+    codeFailures.delete(userId);
     return u;
   }
 
@@ -82,9 +94,17 @@ export function aiAssistantRoutes(app: FastifyInstance, ctx: AppContext) {
   app.get('/api/ai-agent/decisions', agentRoute, async (req, reply) => {
     const a = agentOf(req);
     const wait = z.coerce.number().int().min(0).max(MAX_WAIT_S).default(0).parse((req.query as { wait?: string }).wait);
-    const decisions = await ai.waitDecisions(a.id, wait * 1000);
+    // a dropped connection stops waiting at once; its answers stay until the agent confirms them
+    const decisions = await ai.waitDecisions(a.id, wait * 1000, (stop) => req.raw.once('close', stop));
     reply.header('Cache-Control', 'no-store');
     return { decisions };
+  });
+
+  /** The agent confirms the answers it applied: only then they stop being sent again. */
+  app.post('/api/ai-agent/decisions/ack', agentRoute, async (req) => {
+    const a = agentOf(req);
+    const b = z.object({ refs: z.array(ref).max(100) }).strict().parse(req.body ?? {});
+    return { acknowledged: ai.ack(a.id, b.refs) };
   });
 
   // ---- the admins
@@ -110,20 +130,20 @@ export function aiAssistantRoutes(app: FastifyInstance, ctx: AppContext) {
     return { ok: true };
   });
 
+  /** Every admin sees the requests; the text of the command only the owner of the agent. */
   app.get('/api/admin/ai/requests', admin, async (req) => {
     const state = z.enum(['pending', 'allowed', 'denied', 'expired']).optional().parse((req.query as { state?: string }).state || undefined);
-    return { requests: ai.listRequests({ state }) };
+    const me = req.user!.id;
+    return { requests: ai.listRequests({ state }).map((r) => (r.ownerId === me ? r : { ...r, detail: '' })) };
   });
 
   /** Deny: one tap. Allow: a fresh second-step code; never for a request the PC keeps for itself. */
   app.post('/api/admin/ai/requests/:id/decision', admin, async (req) => {
     const id = z.coerce.number().int().positive().parse((req.params as { id: string }).id);
     const b = z.object({ allow: z.boolean(), code: z.string().max(12).optional() }).strict().parse(req.body ?? {});
-    if (b.allow) {
-      const r = ai.getRequest(id);
-      if (r && r.localOnly) throw new HttpError(409, 'local_only');
-      freshCode(req.user!.id, b.code);
-    }
+    // owner, state, time and «local only» first: a code is never spent on a decision that cannot happen
+    ai.precheck(id, req.user!.id, b.allow);
+    if (b.allow) freshCode(req.user!.id, b.code);
     const r = ai.decide(id, req.user!.id, b.allow);
     recordEvent(db, req.user!.id, b.allow ? 'ai.request.allow' : 'ai.request.deny', String(id), `${r.agent}: ${r.tool.slice(0, 120)}`);
     return r;

@@ -26,6 +26,8 @@ describe('Assistente AI: redazione', () => {
     assert.match(out, /curl/);
     assert.equal(redactAi('mkdir -p src && npm test'), 'mkdir -p src && npm test', 'ordinary commands stay readable');
     assert.equal(redactAi('x'.repeat(2000), 100).length, 101);
+    const env = redactAi('PGPASSWORD=pg1 GITHUB_TOKEN=tk2 AWS_SECRET_ACCESS_KEY=aw3 DB_PASS=db4 psql; curl -u mario:pw5 https://x; mysql -uroot -pmy6 db; sshpass -p ss7 ssh h; curl -H "Authorization: token tt8"');
+    for (const s of ['pg1', 'tk2', 'aw3', 'db4', 'pw5', 'my6', 'ss7', 'tt8']) assert.ok(!env.includes(s), `${s} in ${env}`);
   });
 });
 
@@ -88,7 +90,10 @@ describe('Assistente AI (modulo ai_assistant)', () => {
 
     const d = (await call('GET', '/api/ai-agent/decisions', undefined, A)).json().decisions;
     assert.deepEqual(d, [{ ref: 'p1', allow: true, state: 'allowed' }]);
-    assert.deepEqual((await call('GET', '/api/ai-agent/decisions', undefined, A)).json().decisions, [], 'handed over once');
+    // sent again until the agent confirms it (a dropped poll never loses a decision)
+    assert.deepEqual((await call('GET', '/api/ai-agent/decisions', undefined, A)).json().decisions, d);
+    assert.equal((await call('POST', '/api/ai-agent/decisions/ack', { refs: ['p1'] }, A)).json().acknowledged, 1);
+    assert.deepEqual((await call('GET', '/api/ai-agent/decisions', undefined, A)).json().decisions, [], 'confirmed: not sent again');
     const log = t.db.prepare("SELECT detail FROM events WHERE action = 'ai.request.allow'").get() as { detail: string };
     assert.ok(log && !log.detail.includes('npm install'), 'the log has the tool, not the command');
   });
@@ -142,9 +147,18 @@ describe('Assistente AI (modulo ai_assistant)', () => {
     const { token } = (await call('POST', '/api/admin/ai/agents', { name: 'PC 1', code: code() })).json();
     const A = { authorization: `Bearer ${token}` };
     assert.equal((await call('POST', '/api/ai-agent/requests', { ref: 'a', tool: 'Bash', comando: 'x' }, A)).statusCode, 400, 'unknown fields refused');
-    for (let i = 0; i < 20; i++) assert.equal((await call('POST', '/api/ai-agent/requests', { ref: `q${i}`, tool: 'Bash' }, A)).statusCode, 200);
+    assert.equal((await call('POST', '/api/ai-agent/requests', { ref: 'a', tool: 'Bash(curl -H x:segreto)' }, A)).statusCode, 400, 'the tool is a name, never the command');
+    assert.equal((await call('POST', '/api/ai-agent/requests', { ref: 'a b…', tool: 'Bash' }, A)).statusCode, 400, 'references are never cleaned into each other');
+    assert.equal((await call('POST', '/api/ai-agent/requests', { ref: 'mcp', tool: 'mcp__github__create_pull_request' }, A)).statusCode, 200);
+    for (let i = 0; i < 19; i++) assert.equal((await call('POST', '/api/ai-agent/requests', { ref: `q${i}`, tool: 'Bash' }, A)).statusCode, 200);
     assert.equal((await call('POST', '/api/ai-agent/requests', { ref: 'q20', tool: 'Bash' }, A)).statusCode, 429);
     for (let i = 2; i <= 5; i++) assert.equal((await call('POST', '/api/admin/ai/agents', { name: `PC ${i}`, code: code() })).statusCode, 200);
     assert.equal((await call('POST', '/api/admin/ai/agents', { name: 'PC 6', code: code() })).statusCode, 409);
+    // wrong codes: five, then a pause (a request that cannot be decided never spends a code)
+    const one = (await call('GET', '/api/admin/ai/requests?state=pending')).json().requests[0];
+    for (let i = 0; i < 5; i++) assert.equal((await call('POST', `/api/admin/ai/requests/${one.id}/decision`, { allow: true, code: '000000' })).statusCode, 401);
+    assert.equal((await call('POST', `/api/admin/ai/requests/${one.id}/decision`, { allow: true, code: '000000' })).statusCode, 429);
+    assert.equal((await call('POST', `/api/admin/ai/requests/${one.id}/decision`, { allow: false })).statusCode, 200, 'deny still works');
+    assert.equal((await call('POST', `/api/admin/ai/requests/${one.id}/decision`, { allow: true, code: '000000' })).statusCode, 409, 'checked before the code');
   });
 });

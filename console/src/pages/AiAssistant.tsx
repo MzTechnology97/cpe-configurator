@@ -130,7 +130,7 @@ export function AiAssistant() {
               {r.localOnly && <Badge tone="warn">solo dal PC</Badge>}
             </div>
             <p className="ui-muted ui-small">Testo generato dall’AI, ripulito dei segreti: leggilo prima di decidere.</p>
-            <pre className="mcp-pre ai-cmd">{r.detail || '(nessun dettaglio)'}</pre>
+            <pre className="mcp-pre ai-cmd">{r.detail || (mine(r) ? '(nessun dettaglio)' : `Il testo del comando lo vede solo ${r.owner}.`)}</pre>
             {!mine(r) ? (
               <p className="ui-muted ui-small">Decide l’amministratore che possiede l’agente ({r.owner}).</p>
             ) : (

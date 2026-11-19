@@ -94,6 +94,7 @@ const MESSAGES: Record<string, string> = {
   not_agent_owner: 'Decide l’amministratore che possiede l’agente',
   already_decided: 'Richiesta già decisa o scaduta',
   local_only: 'Comando sensibile: si consente solo sul PC, davanti allo schermo',
+  too_many_code_attempts: 'Troppi codici sbagliati: riprova tra qualche minuto',
   mfa_setup_required: 'Attiva la verifica in due passaggi in "Il mio account"',
   totp_required_by_policy: 'Obbligatoria per gli amministratori: non si può disattivare',
   totp_setup_missing: 'Ricomincia l’attivazione',

@@ -12,6 +12,7 @@ import { redactAi } from '../domain/ai-redact.ts';
  */
 export const AGENT_PREFIX = 'cdaagt_';
 export const AGENT_MAX_DAYS = 90;
+/** Active agents per admin. */
 export const AGENT_MAX_ACTIVE = 5;
 /** A request nobody answers within this time counts as denied. */
 export const REQUEST_TTL_MS = 10 * 60_000;
@@ -120,7 +121,7 @@ export function createAiAssistant(
   }
 
   function createAgent(o: { userId: number; tokenVersion: number; name: string; days: number; ip: string }) {
-    const active = (db.prepare('SELECT COUNT(*) n FROM ai_agents WHERE revoked_at IS NULL AND expires_at > ?').get(iso(now())) as { n: number }).n;
+    const active = (db.prepare('SELECT COUNT(*) n FROM ai_agents WHERE user_id = ? AND revoked_at IS NULL AND expires_at > ?').get(o.userId, iso(now())) as { n: number }).n;
     if (active >= AGENT_MAX_ACTIVE) throw new HttpError(409, 'too_many_agents');
     const token = `${AGENT_PREFIX}${randomBytes(32).toString('base64url')}`;
     const expiresAt = iso(now() + Math.min(Math.max(1, Math.trunc(o.days)), AGENT_MAX_DAYS) * 86_400_000);
@@ -198,7 +199,7 @@ export function createAiAssistant(
   }
 
   function submit(agent: AgentAuth, o: { ref: string; sessionRef: string; ai: string; tool: string; detail: string; localOnly: boolean }): AiRequestView {
-    const ref = clean(o.ref, 80);
+    const ref = o.ref;
     const old = db.prepare('SELECT id FROM ai_permission_requests WHERE agent_id = ? AND ref = ?').get(agent.id, ref) as { id: number } | undefined;
     if (old) return getRequest(old.id)!;
     const pending = (db.prepare("SELECT COUNT(*) n FROM ai_permission_requests WHERE agent_id = ? AND state = 'pending'").get(agent.id) as { n: number }).n;
@@ -214,22 +215,31 @@ export function createAiAssistant(
     return getRequest(Number(r.lastInsertRowid))!;
   }
 
-  /** The answers not yet given to the agent; each one is handed over once. */
+  /**
+   * The answers the agent has not confirmed yet. They are sent again on every poll until the agent
+   * acknowledges them (ack): a poll whose connection dropped never loses a decision.
+   */
   function takeDecisions(agentId: number) {
     const rows = db
-      .prepare("SELECT id, ref, state FROM ai_permission_requests WHERE agent_id = ? AND state <> 'pending' AND delivered_at IS NULL ORDER BY id LIMIT 50")
-      .all(agentId) as Array<{ id: number; ref: string; state: string }>;
-    if (rows.length) {
-      const mark = db.prepare('UPDATE ai_permission_requests SET delivered_at = ? WHERE id = ?');
-      for (const r of rows) mark.run(iso(now()), r.id);
-    }
+      .prepare("SELECT ref, state FROM ai_permission_requests WHERE agent_id = ? AND state <> 'pending' AND delivered_at IS NULL ORDER BY id LIMIT 50")
+      .all(agentId) as Array<{ ref: string; state: string }>;
     return rows.map((r) => ({ ref: r.ref, allow: r.state === 'allowed', state: r.state }));
   }
 
+  /** The agent confirms the answers it applied. */
+  function ack(agentId: number, refs: string[]) {
+    const mark = db.prepare("UPDATE ai_permission_requests SET delivered_at = ? WHERE agent_id = ? AND ref = ? AND state <> 'pending' AND delivered_at IS NULL");
+    let n = 0;
+    for (const r of refs.slice(0, 100)) n += Number(mark.run(iso(now()), agentId, r).changes);
+    return n;
+  }
+
   /** Long poll: the answers as soon as there are some, at most [waitMs] later (empty list). */
-  function waitDecisions(agentId: number, waitMs: number): Promise<ReturnType<typeof takeDecisions>> {
+  function waitDecisions(agentId: number, waitMs: number, closed?: (stop: () => void) => void): Promise<ReturnType<typeof takeDecisions>> {
     const ready = takeDecisions(agentId);
     if (ready.length || waitMs <= 0) return Promise.resolve(ready);
+    // one waiting poll per agent: an older one answers now (empty) and goes away
+    wake(agentId);
     return new Promise((resolve) => {
       let done = false;
       const finish = () => {
@@ -243,6 +253,7 @@ export function createAiAssistant(
       const set = waiters.get(agentId) ?? new Set();
       set.add(finish);
       waiters.set(agentId, set);
+      closed?.(finish);
     });
   }
 
@@ -256,14 +267,20 @@ export function createAiAssistant(
     return rows.map(view);
   }
 
-  /** Only the admin who owns the agent decides; a «local only» request can only be denied here. */
-  function decide(id: number, userId: number, allow: boolean): AiRequestView {
+  /** The checks of a decision, without deciding: run before a second-step code is spent. */
+  function precheck(id: number, userId: number, allow: boolean): AiRequestView {
     expire();
     const r = getRequest(id);
     if (!r) throw new HttpError(404, 'request_not_found');
     if (r.ownerId !== userId) throw new HttpError(403, 'not_agent_owner');
     if (r.state !== 'pending') throw new HttpError(409, 'already_decided', { state: r.state });
     if (allow && r.localOnly) throw new HttpError(409, 'local_only');
+    return r;
+  }
+
+  /** Only the admin who owns the agent decides; a «local only» request can only be denied here. */
+  function decide(id: number, userId: number, allow: boolean): AiRequestView {
+    const r = precheck(id, userId, allow);
     const changed = db
       .prepare("UPDATE ai_permission_requests SET state = ?, decided_at = ?, decided_by = ? WHERE id = ? AND state = 'pending'")
       .run(allow ? 'allowed' : 'denied', iso(now()), userId, id).changes;
@@ -297,7 +314,9 @@ export function createAiAssistant(
     submit,
     getRequest,
     takeDecisions,
+    ack,
     waitDecisions,
+    precheck,
     listRequests,
     decide,
     expire,
