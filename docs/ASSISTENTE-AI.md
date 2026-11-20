@@ -78,8 +78,14 @@ Regole:
 2. **Resource owner**: `cdanet-as200034`. **Repository access**: *Only select repositories* → solo `cdanet-as200034-continuity-hardened`.
 3. **Permissions → Repository permissions → Contents: Read-only** (Metadata: Read-only si aggiunge da sola). Nient'altro.
 4. Scadenza: al massimo un anno, con un promemoria in agenda.
-5. Sul server, nel file `.env` (mai in chat, mai in un repository): `AI_HUB_TOKEN=…`. Facoltativi `AI_HUB_REPO`, `AI_HUB_REF` (default `main`). Riavvia il servizio.
-6. Console → **Amministrazione → Funzionalità** → accendi **Conoscenza AI**, poi **Conoscenza AI → Leggi adesso**.
+5. Console → **Amministrazione → Funzionalità** → accendi **Conoscenza AI**.
+6. Console → **Conoscenza AI**: incolla il token, scrivi un codice di verifica nuovo e premi **Prova e salva** (v1.42.1, serve per i server senza SSH).
+   - GitHub prova subito il token sul repository: se lo rifiuta, non viene salvato.
+   - Il token viene salvato **cifrato** con la chiave principale del server, come i token dei connettori, e **non si vede più**: si può solo sostituire o togliere.
+   - Inserimento e rimozione finiscono nel Registro attività e arrivano al NOC sul canale sicurezza, mai con il token.
+   - Si accettano solo token fine-grained (`github_pat_…`).
+
+In alternativa, con l'accesso al server: nel file `.env` (mai in chat, mai in un repository) `AI_HUB_TOKEN=…`, poi `sudo cdanet-cpe up -d` (`restart` non rilegge il `.env`). Il token del `.env` **ha la precedenza** e dalla console non si può cambiare. Facoltativi `AI_HUB_REPO`, `AI_HUB_REF` (default `main`).
 
 Se il token scade o viene revocato, la pagina dice «GitHub ha rifiutato il token»: la copia già letta resta disponibile.
 
@@ -88,6 +94,8 @@ Se il token scade o viene revocato, la pagina dice «GitHub ha rifiutato il toke
 | `GET /api/admin/ai/memory` | Stato della lettura (commit, ora, errori, file scartati) ed elenco dei file. Visibilità piena. |
 | `GET /api/admin/ai/memory/file?path=…` | Un file, come testo. Visibilità piena. |
 | `POST /api/admin/ai/memory/refresh` | Rilegge adesso (admin, finisce nel Registro). |
+| `PUT /api/admin/ai/memory/token` | `{ token, code }`: token dalla console, con un codice di verifica nuovo (admin). Provato su GitHub, poi salvato cifrato. `409` se il token è nel `.env`. |
+| `DELETE /api/admin/ai/memory/token` | Toglie il token della console (admin). La copia già letta resta. |
 
 ## Privacy
 

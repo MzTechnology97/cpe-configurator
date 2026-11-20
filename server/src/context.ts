@@ -30,6 +30,7 @@ import type { OperatorSites } from './services/operator-sites.ts';
 import type { OttMonitor } from './services/ott-monitor.ts';
 import type { AiAssistant } from './services/ai-assistant.ts';
 import type { AiMemory } from './services/ai-memory.ts';
+import type { FreshCode } from './services/fresh-code.ts';
 import type { Notifier } from './services/notify.ts';
 import type { Telegram } from './services/telegram.ts';
 import type { Dem } from './services/dem.ts';
@@ -98,6 +99,8 @@ export interface AppContext {
   aiAssistant: AiAssistant;
   /** «Conoscenza AI»: the shared memories read from the private repository. */
   aiMemory: AiMemory;
+  /** Fresh second-step codes for sensitive admin actions, one count of wrong attempts. */
+  freshCode: FreshCode;
   dem: Dem;
   /** TINITALY terrain and WorldCover land cover imported by the admin (SRTM where missing). */
   terrain: TerrainStore;
