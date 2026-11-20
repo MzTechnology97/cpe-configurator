@@ -37,10 +37,14 @@ import { threatsRoutes } from './routes/threats.ts';
 import { createOperatorSites, type OperatorSites } from './services/operator-sites.ts';
 import { operatorSitesRoutes } from './routes/operator-sites.ts';
 import { createOttMonitor, type OttMonitor } from './services/ott-monitor.ts';
+import { createAiAssistant, type AiAssistant } from './services/ai-assistant.ts';
+import { aiAssistantRoutes } from './routes/ai-assistant.ts';
+import { createAiMemory, type AiMemory } from './services/ai-memory.ts';
+import { aiMemoryRoutes } from './routes/ai-memory.ts';
 import { ottMonitorRoutes } from './routes/ott-monitor.ts';
 import { docsRoutes } from './routes/docs.ts';
 import { createNotifier, type Notifier } from './services/notify.ts';
-import { createTelegram } from './services/telegram.ts';
+import { createTelegram, escapeHtml } from './services/telegram.ts';
 import type { Uisp } from './services/uisp.ts';
 import { createConnectors } from './services/connectors.ts';
 import { createCrmSettings } from './services/crm.ts';
@@ -203,6 +207,8 @@ export async function buildApp(
     threats: undefined as unknown as Threats,
     operatorSites: undefined as unknown as OperatorSites,
     ottMonitor: undefined as unknown as OttMonitor,
+    aiAssistant: undefined as unknown as AiAssistant,
+    aiMemory: undefined as unknown as AiMemory,
     serverSettings,
     dem,
     terrain: createTerrainStore({ dir: cfg.terrainDir, dem, ...(opts.fetchImpl ? { fetchImpl: opts.fetchImpl } : {}) }),
@@ -284,6 +290,19 @@ export async function buildApp(
     log: (m) => pushLog(m),
   });
   ctx.ottMonitor.seed();
+  // «Assistente AI»: the notice goes to the owner of the agent only (Notifiche, push, personal
+  // Telegram), with the tool's name and never the command; the consoles refresh on 'ai'.
+  ctx.aiAssistant = createAiAssistant(db, {
+    notice: (userId, title, lines) => ctx.notify.inbox.push([userId], { kind: 'ai_permission', title, lines }),
+    changed: () => ctx.live.publish('ai', 'admins'),
+  });
+  ctx.aiMemory = createAiMemory(db, {
+    hub: cfg.aiHub,
+    isOn: () => modules.enabled('ai_memory'),
+    alert: (text) => ctx.notify.security(escapeHtml(text)),
+    ...(opts.fetchImpl ? { fetchImpl: opts.fetchImpl } : {}),
+    log: (m) => pushLog(m),
+  });
   ctx.notify = createNotifier(db, cfg, telegram, () => ctx.uisp, version, () => modules.enabled('telegram'), undefined, (ids, n) => {
     ctx.live.publish('notifications', ids);
     // to the phones at once (Firebase); the reminders of the work orders are scheduled by the app itself
@@ -441,6 +460,8 @@ export async function buildApp(
   threatsRoutes(app, ctx);
   operatorSitesRoutes(app, ctx);
   ottMonitorRoutes(app, ctx);
+  aiAssistantRoutes(app, ctx);
+  aiMemoryRoutes(app, ctx);
   docsRoutes(app, ctx);
   mapRoutes(app, ctx);
   networkRoutes(app, ctx);

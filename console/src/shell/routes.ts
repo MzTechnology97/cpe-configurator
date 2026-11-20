@@ -88,6 +88,8 @@ export const ROUTES: Array<Route | Group> = [
   { id: 'firmware', icon: 'system_update', label: 'Firmware airOS', admin: true, module: 'firmware_upgrade', react: () => import('../pages/Firmware').then((m) => m.Firmware) },
   { id: 'connectors', icon: 'link', label: 'Connettori', admin: true, react: () => import('../pages/Connectors').then((m) => m.Connectors) },
   { id: 'claude', icon: 'monitor_heart', label: 'Connetti il tuo Claude', admin: true, react: () => import('../pages/Claude').then((m) => m.Claude) },
+  { id: 'assistente-ai', icon: 'memory', label: 'Assistente AI', admin: true, module: 'ai_assistant', react: () => import('../pages/AiAssistant').then((m) => m.AiAssistant) },
+  { id: 'conoscenza-ai', icon: 'menu_book', label: 'Conoscenza AI', all: true, module: 'ai_memory', react: () => import('../pages/AiMemory').then((m) => m.AiMemory) },
   { id: 'server', icon: 'dns', label: 'Impostazioni server', admin: true, react: () => import('../pages/ServerSettings').then((m) => m.ServerSettings) },
   { id: 'modules', icon: 'handyman', label: 'Funzionalità', admin: true, react: () => import('../pages/Modules').then((m) => m.Modules) },
   { id: 'bans', icon: 'lock', label: 'Accessi bloccati', admin: true, react: () => import('../pages/Bans').then((m) => m.Bans) },

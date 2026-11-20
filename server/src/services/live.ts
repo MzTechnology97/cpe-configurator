@@ -3,7 +3,7 @@
  * changed, never what; the page asks the API again, with the rights of its user. So an event
  * carries no data and cannot leak any: an installer told "outages changed" sees only their zones.
  */
-export type LiveTopic = 'notifications' | 'advisor' | 'outages';
+export type LiveTopic = 'notifications' | 'advisor' | 'outages' | 'ai';
 
 /** Who hears it: every admin, everyone logged in, or these users. */
 export type LiveAudience = 'admins' | 'all' | number[];

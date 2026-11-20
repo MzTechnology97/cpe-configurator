@@ -61,12 +61,14 @@ fun installTabTitles(m: Map<String, Boolean>, admin: Boolean) = buildList {
     if (m["cpe_health"] != false) add(if (admin) "Salute CPE" else "Stato CPE")
 }
 
-fun networkTabTitles(m: Map<String, Boolean>, admin: Boolean = false) = buildList {
+fun networkTabTitles(m: Map<String, Boolean>, admin: Boolean = false, isAdmin: Boolean = false) = buildList {
     if (m["network_status"] != false) add("Stato")
     // IA-AP: what to fix on APs and CPEs, admins only (the server refuses the others)
     if (admin) add("IA-AP")
     // «Albo e permessi»: off by default, so only when the server says it is on
     if (admin && m["albo"] == true) add("Albo")
+    // «Assistente AI»: off by default, admins only (the server refuses the others)
+    if (isAdmin && m["ai_assistant"] == true) add("Assistente AI")
     if (m["power_outages"] != false) {
         add("Guasti")
         add("Aree e avvisi")
@@ -157,11 +159,12 @@ fun InstallationsHub(
 @Composable
 fun NetworkHub(c: AppContainer, selected: Int, onSelect: (Int) -> Unit, onAim: (CompassTarget) -> Unit, onCompass: (CompassTarget) -> Unit) {
     val modules by c.modules.collectAsState()
-    val tabs = networkTabTitles(modules, c.session.seesAll).map { t ->
+    val tabs = networkTabTitles(modules, c.session.seesAll, c.session.isAdmin).map { t ->
         when (t) {
             "Stato" -> HubTab(t, R.drawable.ic_hub) { NetworkStatusScreen(c) }
             "IA-AP" -> HubTab(t, R.drawable.ic_troubleshoot) { AdvisorScreen(c) }
             "Albo" -> HubTab(t, R.drawable.ic_cell_tower) { AlboScreen(c) }
+            "Assistente AI" -> HubTab(t, R.drawable.ic_memory) { AiAssistantScreen(c) }
             "Guasti" -> HubTab(t, R.drawable.ic_power_off) { OutagesScreen(c, OutageSection.List) }
             "Aree e avvisi" -> HubTab(t, R.drawable.ic_my_location) { OutagesScreen(c, OutageSection.Areas) }
             else -> HubTab(t, R.drawable.ic_explore, scroll = false) { PointingScreen(c, onAim = onAim, onCompass = onCompass) }

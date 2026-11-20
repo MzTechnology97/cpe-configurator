@@ -1264,3 +1264,24 @@ data class OptimizerRunDto(
     val endedAt: String? = null,
     val error: String? = null,
 )
+
+/** «Assistente AI»: a permission request of an AI on a PC (the command only for the agent's owner). */
+@Serializable
+data class AiRequestDto(
+    val id: Long,
+    val agent: String = "",
+    val owner: String = "",
+    val ownerId: Long = 0,
+    val ai: String = "",
+    val tool: String = "",
+    val detail: String = "",
+    val localOnly: Boolean = false,
+    val state: String = "pending",
+    val createdAt: String? = null,
+    val expiresAt: String? = null,
+    val decidedBy: String? = null,
+)
+
+@Serializable
+data class AiRequestsDto(val requests: List<AiRequestDto> = emptyList())
+

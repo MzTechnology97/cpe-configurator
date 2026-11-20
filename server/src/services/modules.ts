@@ -32,6 +32,8 @@ export const MODULES = [
   { key: 'firmware_upgrade', label: 'Aggiornamento firmware', area: 'web + app', description: 'L’admin carica i firmware airOS di riferimento; l’installatore li scarica sul telefono e porta la CPE alla versione richiesta prima del provisioning.', default: false },
   // owner and NOC, 14/10/2026: only admins take screenshots; an installer may be allowed one by one
   { key: 'screenshots', label: 'Screenshot nell’app', area: 'app', description: 'Screenshot e registrazione dello schermo nell’app. Spento: l’app li blocca (anche l’anteprima nelle app recenti). Gli amministratori possono sempre; per installatori e partner si attiva account per account.', default: false },
+  { key: 'ai_assistant', label: 'Assistente AI', area: 'web + app', description: 'Le AI che lavorano sui PC con Continuity chiedono il permesso per i comandi: l’amministratore che possiede l’agente consente (con un codice nuovo) o nega dalla console o dall’app. Il server non comanda mai il PC; i comandi sensibili si decidono solo sul PC.', default: false, global: true },
+  { key: 'ai_memory', label: 'Conoscenza AI', area: 'web', description: 'Le memorie di lavoro condivise dalle AI (profilo, decisioni, progetti, regole per dominio), lette ogni ora da un repository privato con un token in sola lettura; i file con possibili segreti vengono scartati. In console e per Claude (strumento memorie_cdanet).', default: false, global: true },
   { key: 'telegram', label: 'Notifiche Telegram', area: 'server', description: 'Gruppo del NOC e notifiche personali di ogni utente (bot in Connettori → Telegram).', default: true, global: true },
 ] as const;
 
