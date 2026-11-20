@@ -1,3 +1,4 @@
+import type { Sealer } from '../crypto.ts';
 import { nowIso, type Db } from '../db.ts';
 
 /**
@@ -6,11 +7,18 @@ import { nowIso, type Db } from '../db.ts';
  * token that can only READ that repository, keeps a copy, and shows them in the console and to
  * Claude (MCP tool memorie_cdanet). Only Markdown in the two folders below; a file that looks like
  * it holds a secret or personal data is refused and the NOC hears of it.
+ *
+ * The token comes from the server's .env (AI_HUB_TOKEN, it wins) or from the console (v1.42.1, for
+ * servers without SSH): an admin with a fresh code pastes it, it is sealed with the master key like
+ * the connectors' tokens, never shown again, only replaced or removed. Only fine-grained tokens.
  */
 export const MEMORY_DIRS = ['cdanet/hub/memorie/', 'cdanet/hub/playbook/'];
 const MAX_FILES = 100;
 const MAX_BYTES = 64 * 1024;
 const HOUR = 3_600_000;
+const TOKEN_KEY = 'ai_memory_token';
+/** Fine-grained personal access tokens only: they can be limited to one repository and to reading. */
+export const HUB_TOKEN_RE = /^github_pat_[A-Za-z0-9_]{40,250}$/;
 
 /** Same rules as the repository's own check (cdanet/hub/strumenti/controlla-segreti.mjs). */
 export const MEMORY_RULES: Array<[string, RegExp]> = [
@@ -41,6 +49,10 @@ export interface MemoryState {
   skipped: Array<{ path: string; reason: string }>;
   count: number;
   configured: boolean;
+  /** Where the token comes from: the server's .env, the console, or nowhere. */
+  tokenSource: 'env' | 'console' | null;
+  tokenSetAt: string | null;
+  tokenSetBy: string | null;
   repo: string;
   ref: string;
 }
@@ -49,6 +61,7 @@ const titleOf = (md: string, path: string) => /^#\s+(.+)$/m.exec(md)?.[1]?.trim(
 
 export function createAiMemory(
   db: Db,
+  sealer: Sealer,
   o: {
     hub: { token: string | undefined; repo: string; ref: string; api: string };
     isOn: () => boolean;
@@ -63,6 +76,26 @@ export function createAiMemory(
   let timer: ReturnType<typeof setInterval> | null = null;
   let running: Promise<MemoryState> | null = null;
 
+  function stored(): { sealed: string; at: string; by: string } | null {
+    const r = db.prepare('SELECT value FROM settings WHERE key = ?').get(TOKEN_KEY) as { value: string } | undefined;
+    try {
+      return r ? (JSON.parse(r.value) as { sealed: string; at: string; by: string }) : null;
+    } catch {
+      return null;
+    }
+  }
+  /** The token in use: the .env first, then the one from the console. Never leaves this file. */
+  function token(): string | undefined {
+    if (o.hub.token) return o.hub.token;
+    const s = stored();
+    if (!s) return undefined;
+    try {
+      return sealer.open(s.sealed);
+    } catch {
+      return undefined;
+    }
+  }
+
   function state(): MemoryState {
     const r = db.prepare("SELECT value FROM settings WHERE key = 'ai_memory_state'").get() as { value: string } | undefined;
     let s: Partial<MemoryState> = {};
@@ -70,15 +103,29 @@ export function createAiMemory(
       s = r ? (JSON.parse(r.value) as Partial<MemoryState>) : {};
     } catch {}
     const count = (db.prepare('SELECT COUNT(*) n FROM ai_memory_files').get() as { n: number }).n;
-    return { commit: s.commit ?? null, at: s.at ?? null, ok: s.ok ?? false, error: s.error ?? null, skipped: s.skipped ?? [], count, configured: !!o.hub.token, repo: o.hub.repo, ref: o.hub.ref };
+    const t = o.hub.token ? null : stored();
+    return {
+      commit: s.commit ?? null,
+      at: s.at ?? null,
+      ok: s.ok ?? false,
+      error: s.error ?? null,
+      skipped: s.skipped ?? [],
+      count,
+      configured: !!token(),
+      tokenSource: o.hub.token ? 'env' : t ? 'console' : null,
+      tokenSetAt: t?.at ?? null,
+      tokenSetBy: t?.by ?? null,
+      repo: o.hub.repo,
+      ref: o.hub.ref,
+    };
   }
-  function save(s: Omit<MemoryState, 'count' | 'configured' | 'repo' | 'ref'>) {
+  function save(s: Pick<MemoryState, 'commit' | 'at' | 'ok' | 'error' | 'skipped'>) {
     db.prepare("INSERT INTO settings(key, value, updated_at) VALUES('ai_memory_state', ?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at").run(JSON.stringify(s), nowIso());
   }
 
-  async function gh(path: string): Promise<unknown> {
+  async function gh(path: string, tk = token()): Promise<unknown> {
     const res = await f(`${o.hub.api.replace(/\/$/, '')}${path}`, {
-      headers: { authorization: `Bearer ${o.hub.token}`, accept: 'application/vnd.github+json', 'x-github-api-version': '2022-11-28', 'user-agent': 'cdanet-cpe-server' },
+      headers: { authorization: `Bearer ${tk}`, accept: 'application/vnd.github+json', 'x-github-api-version': '2022-11-28', 'user-agent': 'cdanet-cpe-server' },
       redirect: 'error',
       signal: AbortSignal.timeout(20_000),
     });
@@ -91,11 +138,13 @@ export function createAiMemory(
     return JSON.parse(text);
   }
 
+  const repoPath = () => o.hub.repo.split('/').map(encodeURIComponent).join('/');
+
   async function refreshNow(force: boolean): Promise<MemoryState> {
-    if (!o.hub.token) return state();
+    if (!token()) return state();
     const prev = state();
     try {
-      const repo = o.hub.repo.split('/').map(encodeURIComponent).join('/');
+      const repo = repoPath();
       const commit = ((await gh(`/repos/${repo}/commits/${encodeURIComponent(o.hub.ref)}`)) as { sha?: string }).sha;
       if (!commit || !/^[0-9a-f]{40}$/.test(commit)) throw new Error('Commit non valido');
       if (!force && commit === prev.commit && prev.ok) {
@@ -152,15 +201,39 @@ export function createAiMemory(
       (db.prepare('SELECT path, title, size, sha, content, fetched_at fetchedAt FROM ai_memory_files WHERE path = ?').get(path) as
         | { path: string; title: string; size: number; sha: string; content: string; fetchedAt: string }
         | undefined) ?? null,
+    /**
+     * The token from the console: tried on the repository first (a token GitHub refuses is never
+     * saved), then sealed. Refused while the .env has one: that one wins and is changed there.
+     */
+    async setToken(value: string, by: string) {
+      if (o.hub.token) throw new Error('env');
+      if (!HUB_TOKEN_RE.test(value)) throw new Error('format');
+      // the same call as a reading: the repository and the branch must be visible with this token
+      await gh(`/repos/${repoPath()}/commits/${encodeURIComponent(o.hub.ref)}`, value);
+      db.prepare('INSERT INTO settings(key, value, updated_at) VALUES(?, ?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at').run(
+        TOKEN_KEY,
+        JSON.stringify({ sealed: sealer.seal(value), at: nowIso(), by }),
+        nowIso(),
+      );
+      o.alert(`Conoscenza AI: token GitHub inserito dalla console da ${by}.`);
+    },
+    /** The copy already read stays; the next readings stop until a new token. */
+    clearToken(by: string) {
+      if (o.hub.token) throw new Error('env');
+      const had = db.prepare('DELETE FROM settings WHERE key = ?').run(TOKEN_KEY).changes > 0;
+      if (had) o.alert(`Conoscenza AI: token GitHub tolto dalla console da ${by}.`);
+      return had;
+    },
     /** One reading at a time; [force] reads every file even if the commit did not change. */
     refresh(force = false) {
       running ??= refreshNow(force).finally(() => (running = null));
       return running;
     },
     start() {
-      if (timer || !o.hub.token) return;
+      if (timer) return;
+      // armed even without a token: it can arrive from the console
       const tick = () => {
-        if (o.isOn()) void this.refresh(false).catch(() => {});
+        if (o.isOn() && token()) void this.refresh(false).catch(() => {});
       };
       setTimeout(tick, 60_000).unref?.();
       timer = setInterval(tick, HOUR);

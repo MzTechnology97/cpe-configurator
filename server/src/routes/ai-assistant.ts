@@ -4,7 +4,6 @@ import { z } from 'zod';
 import { HttpError } from '../auth.ts';
 import type { AppContext } from '../context.ts';
 import { recordEvent } from '../db.ts';
-import { checkSecondFactor, type SecondFactorUser } from '../services/second-factor.ts';
 import { AGENT_MAX_DAYS, type AgentAuth } from '../services/ai-assistant.ts';
 import { escapeHtml } from '../services/telegram.ts';
 
@@ -13,8 +12,6 @@ const AGENT_CALLS_PER_MINUTE = 60;
 /** The longest a long poll waits for an answer. */
 const MAX_WAIT_S = 25;
 
-/** Second-step codes that may be wrong per admin in 10 minutes on these pages. */
-const CODE_FAILURES = 5;
 /** Opaque references made by the agent: never cleaned or cut, so two of them never become one. */
 const ref = z.string().regex(/^[A-Za-z0-9_.:-]{1,80}$/);
 const session = z
@@ -33,8 +30,6 @@ const request = z
   })
   .strict();
 
-type AdminRow = SecondFactorUser & { active: number; role: string; token_version: number; totp_enabled: number };
-
 /**
  * «Assistente AI» (module ai_assistant, off by default). Two sides:
  * - /api/ai-agent/*: the agent next to Continuity on a PC, with its own token (cdaagt_…), no user session;
@@ -46,8 +41,7 @@ export function aiAssistantRoutes(app: FastifyInstance, ctx: AppContext) {
   const moduleOn = ctx.modules.require('ai_assistant');
   const admin = { preHandler: [ctx.auth.requireAdmin, moduleOn] };
   const calls = new Map<number, number[]>();
-  const codeFailures = new Map<number, number[]>();
-  const userRow = (id: number) => db.prepare('SELECT * FROM users WHERE id = ?').get(id) as AdminRow | undefined;
+  const codes = ctx.freshCode;
 
   /** The agent's token, its admin still valid, and its share of requests per minute. */
   function agentOf(req: FastifyRequest): AgentAuth {
@@ -61,21 +55,6 @@ export function aiAssistantRoutes(app: FastifyInstance, ctx: AppContext) {
     return a;
   }
 
-  /** A fresh second-step code of an admin who has the second step on (anti-replay inside). */
-  function freshCode(userId: number, code: unknown) {
-    const u = userRow(userId);
-    if (!u || !u.active || u.role !== 'admin' || !u.totp_enabled) throw new HttpError(403, 'totp_required');
-    const now = Date.now();
-    const failed = (codeFailures.get(userId) ?? []).filter((t) => t > now - 10 * 60_000);
-    if (failed.length >= CODE_FAILURES) throw new HttpError(429, 'too_many_code_attempts');
-    if (typeof code !== 'string' || !code.trim() || !checkSecondFactor(db, ctx.sealer, u, code.trim())) {
-      codeFailures.set(userId, [...failed, now]);
-      throw new HttpError(401, 'invalid_code');
-    }
-    codeFailures.delete(userId);
-    return u;
-  }
-
   /**
    * The app's alternative to the code: the phone's quick-login key, which the app unlocks only with
    * a STRONG fingerprint or face (keystore key bound to the biometric prompt). Never a «persistent»
@@ -83,8 +62,7 @@ export function aiAssistantRoutes(app: FastifyInstance, ctx: AppContext) {
    */
   function freshDevice(userId: number, device: { id: string; secret: string }) {
     const now = Date.now();
-    const failed = (codeFailures.get(userId) ?? []).filter((t) => t > now - 10 * 60_000);
-    if (failed.length >= CODE_FAILURES) throw new HttpError(429, 'too_many_code_attempts');
+    codes.guard(userId);
     const d = db
       .prepare('SELECT d.user_id, d.secret_hash, d.token_version, d.expires_at, d.persistent, u.token_version tv, u.active, u.role, u.totp_enabled FROM auth_devices d JOIN users u ON u.id = d.user_id WHERE d.id = ?')
       .get(device.id) as { user_id: number; secret_hash: string; token_version: number; expires_at: string | null; persistent: number; tv: number; active: number; role: string; totp_enabled: number } | undefined;
@@ -93,10 +71,10 @@ export function aiAssistantRoutes(app: FastifyInstance, ctx: AppContext) {
       !!d && d.user_id === userId && !d.persistent && !!d.active && d.role === 'admin' && !!d.totp_enabled && d.token_version === d.tv &&
       (!d.expires_at || d.expires_at > new Date(now).toISOString()) && timingSafeEqual(Buffer.from(hash), Buffer.from(d.secret_hash));
     if (!ok) {
-      codeFailures.set(userId, [...failed, now]);
+      codes.failed(userId);
       throw new HttpError(401, 'invalid_device');
     }
-    codeFailures.delete(userId);
+    codes.passed(userId);
   }
 
   // ---- the agent on the PC
@@ -139,7 +117,7 @@ export function aiAssistantRoutes(app: FastifyInstance, ctx: AppContext) {
       .object({ name: z.string().trim().min(2).max(60), days: z.number().int().min(1).max(AGENT_MAX_DAYS).default(AGENT_MAX_DAYS), code: z.string().trim().min(6).max(12) })
       .strict()
       .parse(req.body ?? {});
-    const u = freshCode(req.user!.id, b.code);
+    const u = codes.check(req.user!.id, b.code);
     const created = ai.createAgent({ userId: u.id, tokenVersion: u.token_version, name: b.name, days: b.days, ip: req.ip });
     recordEvent(db, u.id, 'ai.agent.create', String(created.id), `agente «${created.name}», scade ${created.expiresAt.slice(0, 10)}`);
     ctx.notify.security(`Nuovo agente «Assistente AI» «${escapeHtml(created.name)}» creato da <b>${escapeHtml(u.username)}</b>, scade il ${created.expiresAt.slice(0, 10)}.`);
@@ -172,7 +150,7 @@ export function aiAssistantRoutes(app: FastifyInstance, ctx: AppContext) {
     ai.precheck(id, req.user!.id, b.allow);
     if (b.allow) {
       if (b.device) freshDevice(req.user!.id, b.device);
-      else freshCode(req.user!.id, b.code);
+      else codes.check(req.user!.id, b.code);
     }
     const r = ai.decide(id, req.user!.id, b.allow);
     recordEvent(db, req.user!.id, b.allow ? 'ai.request.allow' : 'ai.request.deny', String(id), `${r.agent}: ${r.tool.slice(0, 120)}${b.allow ? (b.device ? ' (impronta)' : ' (codice)') : ''}`);

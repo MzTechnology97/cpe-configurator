@@ -41,6 +41,7 @@ import { createAiAssistant, type AiAssistant } from './services/ai-assistant.ts'
 import { aiAssistantRoutes } from './routes/ai-assistant.ts';
 import { createAiMemory, type AiMemory } from './services/ai-memory.ts';
 import { aiMemoryRoutes } from './routes/ai-memory.ts';
+import { createFreshCode } from './services/fresh-code.ts';
 import { ottMonitorRoutes } from './routes/ott-monitor.ts';
 import { docsRoutes } from './routes/docs.ts';
 import { createNotifier, type Notifier } from './services/notify.ts';
@@ -209,6 +210,7 @@ export async function buildApp(
     ottMonitor: undefined as unknown as OttMonitor,
     aiAssistant: undefined as unknown as AiAssistant,
     aiMemory: undefined as unknown as AiMemory,
+    freshCode: createFreshCode(db, sealer),
     serverSettings,
     dem,
     terrain: createTerrainStore({ dir: cfg.terrainDir, dem, ...(opts.fetchImpl ? { fetchImpl: opts.fetchImpl } : {}) }),
@@ -296,7 +298,7 @@ export async function buildApp(
     notice: (userId, title, lines) => ctx.notify.inbox.push([userId], { kind: 'ai_permission', title, lines }),
     changed: () => ctx.live.publish('ai', 'admins'),
   });
-  ctx.aiMemory = createAiMemory(db, {
+  ctx.aiMemory = createAiMemory(db, sealer, {
     hub: cfg.aiHub,
     isOn: () => modules.enabled('ai_memory'),
     alert: (text) => ctx.notify.security(escapeHtml(text)),
