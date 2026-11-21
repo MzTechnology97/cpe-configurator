@@ -412,7 +412,7 @@ Il produttore dei MAC compare anche nella scansione e nella tabella ARP degli St
 ## Strumenti degli amministratori nell'app
 
 Agli amministratori (e al direttore tecnico, dove indicato in [NOC.md](NOC.md)) l'app dà anche:
-- **Rete → Stato rete**, **IA-AP** (con «Ottimizza…»), **Salute CPE** con **Gestisci** (la CPE come nell'app di UISP), **Guasti Enel** con le zone condivise;
+- **Rete → Stato rete**, **Assistente rete** (con «Ottimizza…»), **Salute CPE** con **Gestisci** (la CPE come nell'app di UISP), **Guasti Enel** con le zone condivise;
 - **Calendario** con nuovo intervento, modifica, spostamento e annullamento;
 - **Copertura** completa (vedi sopra);
 - nel collaudo, «Segna come superato» con il motivo.

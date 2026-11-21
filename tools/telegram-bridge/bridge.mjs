@@ -1,7 +1,7 @@
 // Telegram bridge: the one poller of the team bot, always on (Docker, restart unless-stopped).
 // Keeps every message of the allowed chats in /data/inbox.jsonl (photos and files in
 // /data/files) and puts a 👍 on each one so the sender knows it arrived. Reading and sending is
-// done with cli.mjs (docker exec), so no Claude session has to stay open. No dependencies.
+// done with cli.mjs (docker exec), so no assistant session has to stay open. No dependencies.
 import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 

@@ -19,7 +19,7 @@ async function setup() {
   return { t, H, call, code };
 }
 
-describe('Assistente AI: redazione', () => {
+describe('Approvazioni dei PC: redazione', () => {
   it('removes secrets from the command shown to the admins', () => {
     const out = redactAi('curl -H "Authorization: Bearer abcdefghijklmnop1234" https://admin:pw123@router.example/ --password Segreta1 && export TOKEN=ghp_' + 'a'.repeat(36));
     for (const s of ['abcdefghijklmnop1234', 'pw123', 'Segreta1', 'ghp_aaaa']) assert.ok(!out.includes(s), s);
@@ -31,7 +31,7 @@ describe('Assistente AI: redazione', () => {
   });
 });
 
-describe('Assistente AI (modulo ai_assistant)', () => {
+describe('Approvazioni dei PC (modulo ai_assistant)', () => {
   it('off by default; the agent works only with a token made with a fresh code', async () => {
     const { t, call, code } = await setup();
     assert.equal((await call('GET', '/api/admin/ai/agents')).statusCode, 404, 'module off');
@@ -46,7 +46,7 @@ describe('Assistente AI (modulo ai_assistant)', () => {
     const A = { authorization: `Bearer ${token}` };
     assert.equal((await call('POST', '/api/ai-agent/hello', { version: '1.0.0' }, {})).statusCode, 401);
     assert.equal((await call('POST', '/api/ai-agent/hello', { version: '1.0.0' }, { authorization: 'Bearer cdaagt_falso' })).statusCode, 401);
-    const hi = await call('POST', '/api/ai-agent/hello', { version: '1.0.0', sessions: [{ ref: 'r1', goal: 'Sito CDA Net', ai: 'claude', state: 'RUNNING', project: 'sito' }] }, A);
+    const hi = await call('POST', '/api/ai-agent/hello', { version: '1.0.0', sessions: [{ ref: 'r1', goal: 'Sito CDA Net', ai: 'assistente', state: 'RUNNING', project: 'sito' }] }, A);
     assert.equal(hi.statusCode, 200, hi.body);
     const agents = (await call('GET', '/api/admin/ai/agents')).json().agents;
     assert.equal(agents[0].sessions[0].goal, 'Sito CDA Net');
@@ -63,7 +63,7 @@ describe('Assistente AI (modulo ai_assistant)', () => {
     await call('PUT', '/api/admin/modules', { ai_assistant: true });
     const { token } = (await call('POST', '/api/admin/ai/agents', { name: 'PC ufficio', code: code() })).json();
     const A = { authorization: `Bearer ${token}` };
-    const sent = await call('POST', '/api/ai-agent/requests', { ref: 'p1', sessionRef: 'r1', ai: 'claude', tool: 'Bash', detail: 'npm install --password Segreta1 leaflet' }, A);
+    const sent = await call('POST', '/api/ai-agent/requests', { ref: 'p1', sessionRef: 'r1', ai: 'assistente', tool: 'Bash', detail: 'npm install --password Segreta1 leaflet' }, A);
     assert.equal(sent.statusCode, 200, sent.body);
     assert.equal(sent.json().state, 'pending');
     // the same request again is the same request (the agent may retry)

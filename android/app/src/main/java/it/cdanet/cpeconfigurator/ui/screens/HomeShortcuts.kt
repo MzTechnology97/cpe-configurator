@@ -77,7 +77,7 @@ fun shortcutCatalog(m: Map<String, Boolean>, admin: Boolean, offline: Boolean, s
     if (on && m["compass"] != false) add(Shortcut("ar", "Realtà aumentata", "Inquadra il paesaggio: AP, orizzonte e Fresnel da qui", R.drawable.ic_my_location, Area.Network, Dest(Screen.ArLive)))
     if (on && "AP vicini" in net) add(Shortcut("near_aps", "AP vicini", "Sul posto: AP intorno a te, bussola e mirino", R.drawable.ic_explore, Area.Network, Dest(Screen.NetHub, "AP vicini")))
     if (on && "Stato" in net) add(Shortcut("net_status", "Stato rete", "POP e AP raggiungibili, CPE offline", R.drawable.ic_hub, Area.Network, Dest(Screen.NetHub, "Stato")))
-    if (on && "IA-AP" in net) add(Shortcut("ia_ap", "IA-AP", "AP e CPE da sistemare: segnale, canali, carico", R.drawable.ic_troubleshoot, Area.Network, Dest(Screen.NetHub, "IA-AP")))
+    if (on && "Assistente rete" in net) add(Shortcut("ia_ap", "Assistente rete", "AP e CPE da sistemare: segnale, canali, carico", R.drawable.ic_troubleshoot, Area.Network, Dest(Screen.NetHub, "Assistente rete")))
     if (on && "Guasti" in net) add(Shortcut("outages", "Guasti Enel", if (admin) "Guasti e lavori della rete elettrica" else "Guasti e lavori nelle tue zone", R.drawable.ic_power_off, Area.Network, Dest(Screen.NetHub, "Guasti")))
     if (on && "Aree e avvisi" in net) add(Shortcut("areas", "Aree e avvisi", "Zone da seguire e notifiche dei guasti", R.drawable.ic_my_location, Area.Network, Dest(Screen.NetHub, "Aree e avvisi")))
     // my work

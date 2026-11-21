@@ -15,8 +15,8 @@ Ogni utente ha la sua pagina **Notifiche**, con la campanella e il numero da leg
 | Promemoria degli interventi (24 h, 2 h, 1 h e 30 minuti prima) | installatore | sì |
 | Intervento in ritardo o non fatto | installatore | sì |
 | Interventi in ritardo o non fatti, posizione non corrispondente | NOC | sì |
-| Assistente rete: nuovi problemi critici su AP e CPE (IA-AP, al massimo una volta alla settimana per avviso) | NOC | no |
-| IA-AP: esito delle ottimizzazioni automatiche | NOC | sì |
+| Assistente rete: nuovi problemi critici su AP e CPE (al massimo una volta alla settimana per avviso) | NOC | no |
+| Assistente rete: esito delle ottimizzazioni automatiche | NOC | sì |
 | Tentativi di screenshot nell'app (screenshot o registrazione, con l'ora se l'avviso arriva in ritardo) | NOC | sì |
 | CPE installata che non risulta nel magazzino dell'installatore | NOC | no |
 | Magazzino di un installatore sotto il minimo | NOC | sì |
@@ -69,7 +69,7 @@ Per avere nei messaggi il link alla console imposta l'indirizzo pubblico in Impo
 | Installazioni da seguire | provisioning fallito, installazione KO o rimandata (con il motivo), collaudo con segnale pessimo da approvare |
 | CPE da accettare in UISP | collaudo superato o approvato dal NOC, una sola volta per installazione, con il link allo storico; mai per una CPE già autorizzata in UISP |
 | Servizi giù / di nuovo su | UISP, ISP Billing, magazzino, guasti Enel, Victron, backup sul NAS e spazio su disco: controllo ogni 5 minuti, messaggio solo al cambio di stato |
-| Sicurezza | account o IP bloccato per troppi tentativi; amministratore da un indirizzo nuovo; password di un amministratore o di uno Specialist cambiata o reimpostata; utente promosso amministratore o reso Specialist; nuovo Specialist; verifica in due passaggi attivata, disattivata, azzerata o resa obbligatoria; chiavi WPA2 esportate in chiaro; Claude collegato e ogni sua modifica; gruppi di lavoro creati o cambiati |
+| Sicurezza | account o IP bloccato per troppi tentativi; amministratore da un indirizzo nuovo; password di un amministratore o di uno Specialist cambiata o reimpostata; utente promosso amministratore o reso Specialist; nuovo Specialist; verifica in due passaggi attivata, disattivata, azzerata o resa obbligatoria; chiavi WPA2 esportate in chiaro; assistente collegato con il connettore MCP e ogni sua modifica; gruppi di lavoro creati o cambiati |
 | Guasti Enel | nuovo guasto o lavoro e-distribuzione in una zona di interesse o vicino a un AP, e ripristino; batteria critica e rientro dei POP |
 | Riepilogo serale e report mensile | ogni sera all'ora scelta (ora italiana): installazioni riuscite e fallite, rimandate e KO, collaudi, CPE ancora da accettare, versione del server. Il 1° del mese alle 8 il report del mese finito, testo e PDF |
 

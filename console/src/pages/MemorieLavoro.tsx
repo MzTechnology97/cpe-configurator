@@ -6,7 +6,7 @@ import type { PageContext } from '../shell/routes';
 import { AsyncButton, Badge, Button, Card, EmptyState, Field, Notice, PageHeader, Skeleton, Table } from '../ui';
 
 /**
- * «Conoscenza AI» (module ai_memory): the shared work memories of the AIs, read every hour from the
+ * «Memorie di lavoro» (module ai_memory): the shared work memories of the AIs, read every hour from the
  * private repository with a read-only token. Shown as plain text (never rendered as HTML): they
  * are reviewed in Git, here they are only read. Admins can read them again now, and (v1.42.1) put
  * the read-only GitHub token here when the server has no SSH: with a fresh code, never shown again.
@@ -44,7 +44,7 @@ const fail = (e: unknown) => {
 };
 const folder = (p: string) => (p.includes('/playbook/') ? 'Playbook' : 'Memorie');
 
-export function AiMemory({ user }: PageContext) {
+export function MemorieLavoro({ user }: PageContext) {
   const q = useQuery({ queryKey: ['ai-memory'], queryFn: () => api<Memory>('/api/admin/ai/memory') });
   const [open, setOpen] = useState<string | null>(null);
   const me = useQuery({ queryKey: ['auth', 'account'], queryFn: () => api<{ totpEnabled: boolean }>('/api/auth/account'), enabled: user.role === 'admin' });
@@ -97,7 +97,7 @@ export function AiMemory({ user }: PageContext) {
   );
   return (
     <div className="ui-page">
-      <PageHeader icon="menu_book" title="Conoscenza AI" subtitle="Le memorie di lavoro condivise dalle AI: profilo, decisioni, progetti e regole per dominio. Si scrivono e si rivedono in Git; qui si leggono. Claude le riceve con lo strumento memorie_cdanet." />
+      <PageHeader icon="menu_book" title="Memorie di lavoro" subtitle="Le memorie di lavoro condivise dagli assistenti: profilo, decisioni, progetti e regole per dominio. Si scrivono e si rivedono in Git; qui si leggono. Gli assistenti collegati le ricevono con lo strumento memorie_cdanet." />
       {q.error && <Notice tone="bad">{(q.error as Error).message}</Notice>}
       {!q.data && !q.error && <Skeleton lines={6} />}
       {s && (
@@ -114,7 +114,7 @@ export function AiMemory({ user }: PageContext) {
           {!s.configured ? (
             <>
               <Notice tone="warn" title="Token non configurato">
-                Serve un token GitHub fine-grained in sola lettura (Contents: Read-only) sul solo repository {s.repo}. {isAdmin ? 'Incollalo qui sotto con un codice di verifica nuovo: GitHub lo prova subito, poi viene salvato cifrato e non si vede più.' : 'Lo inserisce un amministratore.'} Guida in docs/ASSISTENTE-AI.md.
+                Serve un token GitHub fine-grained in sola lettura (Contents: Read-only) sul solo repository {s.repo}. {isAdmin ? 'Incollalo qui sotto con un codice di verifica nuovo: GitHub lo prova subito, poi viene salvato cifrato e non si vede più.' : 'Lo inserisce un amministratore.'} Guida in docs/APPROVAZIONI-PC.md.
               </Notice>
               {isAdmin && me.data && !me.data.totpEnabled && <Notice tone="bad">Serve la verifica in due passaggi attiva sul tuo account (Account → Sicurezza).</Notice>}
               {isAdmin && tokenForm}

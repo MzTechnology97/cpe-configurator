@@ -211,7 +211,7 @@ export function createProactiveAlerts(ctx: AppContext, log?: (m: string) => void
     if (busy.length) {
       ctx.notify.proactive(
         `📶 ${busy.length === 1 ? 'AP vicino' : `${busy.length} AP vicini`} alla saturazione la sera`,
-        busy.slice(0, 8).map((b) => `${b.name}: ${Math.round(b.busy)}% la sera${b.load.stations != null ? ` · ${b.load.stations} CPE` : ''}`).concat(['Valuta un canale più largo, un ripuntamento verso un altro AP o un AP in più (IA-AP).']),
+        busy.slice(0, 8).map((b) => `${b.name}: ${Math.round(b.busy)}% la sera${b.load.stations != null ? ` · ${b.load.stations} CPE` : ''}`).concat(['Valuta un canale più largo, un ripuntamento verso un altro AP o un AP in più (Assistente rete).']),
       );
       remember(busy.map((b) => `ap:${b.apId}`));
     }

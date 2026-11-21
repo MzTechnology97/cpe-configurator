@@ -4,7 +4,7 @@ Le pagine del lavoro quotidiano del NOC: amministratori e, dove indicato, il dir
 
 ## Panoramica
 
-La prima pagina (amministratori e direttore tecnico): provisioning delle ultime 24 ore, interventi di oggi fatti e in ritardo, collaudi da approvare, KO o rimandi aperti, problemi critici IA-AP, AP non raggiungibili o con un guasto Enel vicino; sotto, i lavori da completare, l'attività degli ultimi 30 giorni e lo stato di UISP, della ricerca indirizzi e dell'app Android pubblicata.
+La prima pagina (amministratori e direttore tecnico): provisioning delle ultime 24 ore, interventi di oggi fatti e in ritardo, collaudi da approvare, KO o rimandi aperti, problemi critici dell’Assistente rete, AP non raggiungibili o con un guasto Enel vicino; sotto, i lavori da completare, l'attività degli ultimi 30 giorni e lo stato di UISP, della ricerca indirizzi e dell'app Android pubblicata.
 
 ## Interventi e calendario
 
@@ -130,9 +130,9 @@ Molti POP sono alimentati a fotovoltaico con batterie Victron. Il connettore **V
   - «Di nuovo in carica» arriva solo dopo quell'avviso e dopo 15 minuti di carica continua. Poi per 2 ore non parte un altro avviso.
   - Lo stato degli avvisi resta nel database: un aggiornamento del server non li ripete.
 
-## IA-AP: assistente della rete (admin, v1.32.55)
+## Assistente rete (admin, v1.32.55)
 
-Console → **IA-AP**, e nell'app Rete → **IA-AP** (anche come scorciatoia della Home); solo admin, gli installatori non vedono né la scheda né i dati. Ogni ora, insieme al carico serale degli AP, il server analizza tutti gli AP airMAX di UISP e le loro CPE e scrive cosa sistemare. L'analisi è in sola lettura; i dispositivi cambiano solo con l'ottimizzazione automatica, avviata da un admin (sotto).
+Console → **Assistente rete**, e nell'app Rete → **Assistente rete** (anche come scorciatoia della Home); solo admin, gli installatori non vedono né la scheda né i dati. Ogni ora, insieme al carico serale degli AP, il server analizza tutti gli AP airMAX di UISP e le loro CPE e scrive cosa sistemare. L'analisi è in sola lettura; i dispositivi cambiano solo con l'ottimizzazione automatica, avviata da un admin (sotto).
 
 Dati usati, tutti da UISP: stazioni collegate (segnale, rumore, modulazione attuale e ideale nei due sensi, airtime, capacità, polarizzazioni), statistiche della settimana (andamento del segnale, carico serale 20–23), **spettro misurato dall'AP e da ogni CPE** (come airView), frequenza, ampiezza, azimut e modello dell'antenna; in più il modello di copertura per il segnale atteso di ogni cliente.
 
@@ -181,7 +181,7 @@ Per ogni prova il server, tramite UISP:
 Un canale è **migliore** se la capacità totale delle CPE sale almeno del 5% senza perdere più di 1 dB di SNR mediano (la regola non vale se l'SNR resta almeno a 30 dB: lì la modulazione è già la massima) e senza che il cliente più debole perda più di 3 dB. Alla fine resta il migliore; se nessuno lo è, o se una CPE non si riaggancia, l'AP torna al **canale iniziale** e gli admin ricevono una notifica (anche su Telegram, se scelto) con l'esito di ogni prova. Un AP alla volta; *Annulla e ripristina* ferma la prova in corso e rimette il canale iniziale. Se il server si riavvia durante una prova, alla ripartenza rimette il canale iniziale e lo segnala. Ogni avvio e annullamento è nel registro attività.
 
 
-**Antenne (v1.32.72)**: IA-AP segnala, come informazione, gli AP con almeno 3 clienti senza azimut dell'antenna (né in UISP né in Copertura → Antenne degli AP), con l'azimut suggerito dai clienti, e le radio senza antenna propria (Rocket) di cui nessuno ha indicato l'antenna (horn RF elements, settore…). Si sistemano in Copertura → Antenne degli AP.
+**Antenne (v1.32.72)**: Assistente rete segnala, come informazione, gli AP con almeno 3 clienti senza azimut dell'antenna (né in UISP né in Copertura → Antenne degli AP), con l'azimut suggerito dai clienti, e le radio senza antenna propria (Rocket) di cui nessuno ha indicato l'antenna (horn RF elements, settore…). Si sistemano in Copertura → Antenne degli AP.
 
 ## Statistiche (admin)
 
@@ -226,4 +226,4 @@ Il backup completo del server (database, chiave principale, configurazione) è i
 
 ## Registro attività
 
-Ogni azione rilevante, con chi, quando e cosa: accessi, account, connettori, impostazioni, installazioni, accettazioni in UISP, modifiche agli interventi, download dei rapporti, azioni di Claude, gruppi di lavoro. Le azioni fatte dal connettore MCP sono segnate «via Claude» (vedi [MCP.md](MCP.md)). Il registro si conserva per i mesi dell'informativa privacy accettata dagli utenti; se l'informativa non è compilata, per i giorni di Impostazioni server → Conservazione dello storico e del registro. Le installazioni riuscite, con collaudi e foto, non vengono cancellate dalla pulizia. Lo vedono gli amministratori e il direttore tecnico.
+Ogni azione rilevante, con chi, quando e cosa: accessi, account, connettori, impostazioni, installazioni, accettazioni in UISP, modifiche agli interventi, download dei rapporti, azioni del connettore MCP, gruppi di lavoro. Le azioni fatte dal connettore MCP sono segnate «via connettore MCP» (vedi [MCP.md](MCP.md)). Il registro si conserva per i mesi dell'informativa privacy accettata dagli utenti; se l'informativa non è compilata, per i giorni di Impostazioni server → Conservazione dello storico e del registro. Le installazioni riuscite, con collaudi e foto, non vengono cancellate dalla pulizia. Lo vedono gli amministratori e il direttore tecnico.

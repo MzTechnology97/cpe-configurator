@@ -4,9 +4,9 @@ import type { Db } from '../db.ts';
 import { redactAi } from '../domain/ai-redact.ts';
 
 /**
- * «Assistente AI» (module ai_assistant): the AIs work on the PCs with Continuity; an agent next to
+ * «Approvazioni dei PC» (module ai_assistant): the assistants work on the PCs with Continuity; an agent next to
  * it connects OUT to this server with its own token and forwards only the permission requests of
- * the AI. An admin allows or denies them from the console or the app. The server never commands
+ * the assistant. An admin allows or denies them from the console or the app. The server never commands
  * the PC: it can only answer yes or no to a request the agent itself created, and a request the PC
  * marks «local only» (git push, credentials, network devices...) cannot be allowed from here.
  */
@@ -209,7 +209,7 @@ export function createAiAssistant(
     const r = db
       .prepare('INSERT INTO ai_permission_requests(agent_id, ref, session_ref, ai, tool, detail, local_only, created_at, expires_at) VALUES(?,?,?,?,?,?,?,?,?)')
       .run(agent.id, ref, clean(o.sessionRef, 80), ai, tool, redactAi(o.detail, DETAIL_MAX), o.localOnly ? 1 : 0, iso(now()), iso(now() + REQUEST_TTL_MS));
-    const lines = [`${ai || 'L’AI'} vuole usare: ${tool}`, o.localOnly ? 'Si decide solo sul PC, davanti allo schermo.' : 'Apri Assistente AI per consentire o negare (scade tra 10 minuti).'];
+    const lines = [`${ai || 'L’assistente'} vuole usare: ${tool}`, o.localOnly ? 'Si decide solo sul PC, davanti allo schermo.' : 'Apri Approvazioni dei PC per consentire o negare (scade tra 10 minuti).'];
     deps.notice(agent.userId, `🤖 ${agent.name} chiede un permesso`, lines);
     deps.changed();
     return getRequest(Number(r.lastInsertRowid))!;

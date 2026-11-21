@@ -669,8 +669,8 @@ const MIGRATIONS: Array<string | CodeMigration> = [
   CREATE INDEX cpe_rma_state ON cpe_rma(state);
   ALTER TABLE users ADD COLUMN warehouse_min_stock INTEGER;
   `,
-  // the admins' own Claude (MCP connector, read-only monitoring): OAuth clients registered by the
-  // Claude apps, one-time codes and the connections (tokens kept as SHA-256 only, revocable)
+  // the admins' own assistant (MCP connector, read-only monitoring): OAuth clients registered by the
+  // MCP apps, one-time codes and the connections (tokens kept as SHA-256 only, revocable)
   `
   CREATE TABLE mcp_clients(
     id TEXT PRIMARY KEY,
@@ -708,7 +708,7 @@ const MIGRATIONS: Array<string | CodeMigration> = [
   );
   CREATE INDEX mcp_tokens_user ON mcp_tokens(user_id);
   `,
-  // every login attempt (web, app, Claude) and the bans of IPs and devices (fail2ban-like)
+  // every login attempt (web, app, MCP) and the bans of IPs and devices (fail2ban-like)
   `
   CREATE TABLE login_attempts(
     id INTEGER PRIMARY KEY,
@@ -736,7 +736,7 @@ const MIGRATIONS: Array<string | CodeMigration> = [
   );
   CREATE INDEX login_bans_value ON login_bans(kind, value);
   `,
-  // a Claude connection with «lettura e scrittura» (chosen at the consent): the write tools too
+  // an MCP connection with «lettura e scrittura» (chosen at the consent): the write tools too
   `
   ALTER TABLE mcp_codes ADD COLUMN can_write INTEGER NOT NULL DEFAULT 0;
   ALTER TABLE mcp_tokens ADD COLUMN can_write INTEGER NOT NULL DEFAULT 0;
@@ -1044,7 +1044,7 @@ const MIGRATIONS: Array<string | CodeMigration> = [
   CREATE INDEX ott_samples_service ON ott_samples(service_id, at);
   CREATE INDEX ott_samples_at ON ott_samples(at);
   `,
-  // 56 · v1.42.0: «Assistente AI» (Carmelo, 19/11/2026): the agents next to Continuity on the PCs
+  // 56 · v1.42.0: «Approvazioni dei PC» (Carmelo, 19/11/2026): the agents next to Continuity on the PCs
   // (token as SHA-256, bound to an admin like the MCP service tokens) and the permission requests of
   // the AIs, allowed or denied by that admin. Requests are deleted after 30 days.
   `
@@ -1084,8 +1084,8 @@ const MIGRATIONS: Array<string | CodeMigration> = [
   CREATE INDEX ai_requests_state ON ai_permission_requests(state, expires_at);
   CREATE INDEX ai_requests_agent ON ai_permission_requests(agent_id, state);
   `,
-  // 57 · v1.42.0: «Conoscenza AI»: the shared memories of the AIs (Markdown read from a private
-  // repository with a read-only token, files with secrets refused), shown in the console and to Claude.
+  // 57 · v1.42.0: «Memorie di lavoro»: the shared work memories of the assistants (Markdown read from a
+  // private repository with a read-only token, files with secrets refused), shown in the console and over MCP.
   `
   CREATE TABLE ai_memory_files(
     path TEXT PRIMARY KEY,
@@ -1096,6 +1096,9 @@ const MIGRATIONS: Array<string | CodeMigration> = [
     fetched_at TEXT NOT NULL
   );
   `,
+  // 58 · v1.42.2: the login channel of the MCP consent is called «mcp» (rule on vendor names in the
+  // repository): the old value, written in pieces, becomes the new one.
+  `UPDATE login_attempts SET channel = 'mcp' WHERE channel = 'cla' || 'ude';`,
 ];
 
 export function openDatabase(path: string): Db {

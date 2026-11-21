@@ -19,7 +19,7 @@ Node.js 24 esegue TypeScript direttamente (type stripping): non c'è uno step di
 | `db.ts` | Migrazioni con `PRAGMA user_version` (circa 50: dalla 1, che adotta lo schema v0.5.x, alla 49 della v1.36.4). |
 | `crypto.ts` | AES-256-GCM per i segreti (formato compatibile con v0.5), scrypt per le password, MD5-crypt per `users.N.password`. |
 | `auth.ts` | JWT con `token_version`: disattivare un account, cambiarne password o ruolo revoca subito le sessioni. Ruoli `admin`, `installer`, `specialist` (con `full_view`); `requireAdmin`, `requireStaff`, `requireSeesAll`, `requireCdaWork`. |
-| `domain/` | Logica pura e testata: policy e modelli, `system.cfg` e modulo dei template (`systemcfg.ts`, `airos-form.ts`, `specialist-cfg.ts`), salute CPE, modello di copertura e linea di vista (`coverage-model.ts`, `los.ts`), carico degli AP, ottimizzatore e IA-AP, ruoli (`roles.ts`), TOTP, CSV, confronto con il template. |
+| `domain/` | Logica pura e testata: policy e modelli, `system.cfg` e modulo dei template (`systemcfg.ts`, `airos-form.ts`, `specialist-cfg.ts`), salute CPE, modello di copertura e linea di vista (`coverage-model.ts`, `los.ts`), carico degli AP, ottimizzatore e Assistente rete, ruoli (`roles.ts`), TOTP, CSV, confronto con il template. |
 | `services/` | I servizi con stato: provisioning e template, UISP e CRM di UISP, ISP Billing (CRM e magazzino), terreno, edifici, alberi e antenne, guasti Enel, Victron, MyWic, notifiche (pagina, Telegram, Firebase), avvisi proattivi, salute della piattaforma, backup sul NAS, report mensile, diagnosi, blocco degli accessi, strumenti MCP, eventi in tempo reale. |
 | `routes/` | Le API, un file per area (vedi sotto). |
 | `net/` | Strumenti lato server: ping, traceroute, DNS, scansione /24, SNMP BER, NetBIOS, ONVIF/SADP, porte, BGP, produttore dei MAC, RouterOS via SSH. |
@@ -41,7 +41,7 @@ Tutte sotto `/api`, tranne il connettore MCP (`/mcp`, `/.well-known/oauth-*`, `/
 | Copertura | `/api/coverage`, `/api/coverage/link`, `/api/pointing/*`, `/api/saved-checks*`, `/api/geocode*`, `/api/admin/coverage/simulation`, `/api/admin/feasibility*` | modulo Copertura, con limiti per ruolo |
 | Rete | `/api/network/status`, `/api/cpe-health*`, `/api/outages/*`, `/api/notifications/*`, `/api/events` (SSE) | utente, per modulo |
 | Specialist | `/api/specialist/*` (template, connettori, flusso, storico, gruppi) | Specialist |
-| Amministrazione | `/api/admin/*`: account, gruppi di lavoro, template, reti Wi-Fi, firmware, connettori, impostazioni, moduli, UISP, CPE, IA-AP, magazzino, statistiche e report, terreno e antenne, accessi bloccati, MCP, privacy, salute piattaforma e backup, NAS, Registro | amministratori; le viste dei dati di CDA Net anche al direttore tecnico (`requireSeesAll`) |
+| Amministrazione | `/api/admin/*`: account, gruppi di lavoro, template, reti Wi-Fi, firmware, connettori, impostazioni, moduli, UISP, CPE, Assistente rete, magazzino, statistiche e report, terreno e antenne, accessi bloccati, MCP, privacy, salute piattaforma e backup, NAS, Registro | amministratori; le viste dei dati di CDA Net anche al direttore tecnico (`requireSeesAll`) |
 | Strumenti | `/api/tools/*`, `/api/routeros/*` | utente (dalla rete di CDA Net: `requireCdaWork`) |
 
 ### Pacchetto del job (solo all'app, `Cache-Control: no-store`)

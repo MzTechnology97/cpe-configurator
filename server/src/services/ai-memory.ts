@@ -2,10 +2,10 @@ import type { Sealer } from '../crypto.ts';
 import { nowIso, type Db } from '../db.ts';
 
 /**
- * «Conoscenza AI» (module ai_memory): the shared work memories of the AIs live in Git, in a private
+ * «Memorie di lavoro» (module ai_memory): the shared work memories of the AIs live in Git, in a private
  * repository, and are reviewed there. The server reads them every hour with a fine-grained GitHub
  * token that can only READ that repository, keeps a copy, and shows them in the console and to
- * Claude (MCP tool memorie_cdanet). Only Markdown in the two folders below; a file that looks like
+ * the assistants (MCP tool memorie_cdanet). Only Markdown in the two folders below; a file that looks like
  * it holds a secret or personal data is refused and the NOC hears of it.
  *
  * The token comes from the server's .env (AI_HUB_TOKEN, it wins) or from the console (v1.42.1, for
@@ -183,7 +183,7 @@ export function createAiMemory(
         throw err;
       }
       const fresh = skipped.filter((s) => !prev.skipped.some((p) => p.path === s.path && p.reason === s.reason));
-      if (fresh.length) o.alert(`Conoscenza AI: ${fresh.length} file scartati per possibili segreti o dati personali (${fresh.map((s) => `${s.path}: ${s.reason}`).join('; ').slice(0, 600)}). Correggili nel repository.`);
+      if (fresh.length) o.alert(`Memorie di lavoro: ${fresh.length} file scartati per possibili segreti o dati personali (${fresh.map((s) => `${s.path}: ${s.reason}`).join('; ').slice(0, 600)}). Correggili nel repository.`);
       save({ commit, at: nowIso(), ok: true, error: tree.truncated ? 'Elenco dei file tagliato da GitHub' : null, skipped });
       log(`ai memory: ${keep.length} file, ${skipped.length} scartati, commit ${commit.slice(0, 7)}`);
     } catch (e) {
@@ -215,13 +215,13 @@ export function createAiMemory(
         JSON.stringify({ sealed: sealer.seal(value), at: nowIso(), by }),
         nowIso(),
       );
-      o.alert(`Conoscenza AI: token GitHub inserito dalla console da ${by}.`);
+      o.alert(`Memorie di lavoro: token GitHub inserito dalla console da ${by}.`);
     },
     /** The copy already read stays; the next readings stop until a new token. */
     clearToken(by: string) {
       if (o.hub.token) throw new Error('env');
       const had = db.prepare('DELETE FROM settings WHERE key = ?').run(TOKEN_KEY).changes > 0;
-      if (had) o.alert(`Conoscenza AI: token GitHub tolto dalla console da ${by}.`);
+      if (had) o.alert(`Memorie di lavoro: token GitHub tolto dalla console da ${by}.`);
       return had;
     },
     /** One reading at a time; [force] reads every file even if the commit did not change. */

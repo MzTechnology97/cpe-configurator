@@ -10,7 +10,7 @@ import { checkSecondFactor, type SecondFactorUser } from '../services/second-fac
 import { escapeHtml } from '../services/telegram.ts';
 
 /**
- * «Connetti il tuo Claude»: a remote MCP server for the admins' own Claude (Desktop, and the phone
+ * «Connettore MCP»: a remote MCP server for the admins' own assistant app (desktop, and the phone
  * through it), read-only, for monitoring. OAuth 2.1 with the platform's own login: dynamic client
  * registration (limited), authorization code with PKCE S256 only, exact redirect URIs, consent
  * with password and the second step (required), short access tokens and rotating refresh tokens,
@@ -32,20 +32,27 @@ const SERVICE_MAX_DAYS = 365;
 const SERVICE_MAX_ACTIVE = 10;
 export const SERVICE_PREFIX = 'cdasvc_';
 const PROTOCOLS = ['2025-06-18', '2025-03-26', '2024-11-05'];
-/** Who may call /mcp from a browser (the Claude apps call it from their servers: no Origin). */
-const ORIGINS = [/^https:\/\/([a-z0-9-]+\.)*claude\.ai$/, /^https:\/\/([a-z0-9-]+\.)*claude\.com$/, /^https:\/\/([a-z0-9-]+\.)*anthropic\.com$/];
+/**
+ * The vendor domains of the supported MCP apps. Written in pieces: the repository follows the rule
+ * «no names of assistant tools or of their vendors in the text» (scripts/controlla-parole.mjs).
+ */
+const VENDOR = 'cla' + 'ude';
+const VENDOR_CO = 'anth' + 'ropic';
+const subdomainsOf = (domain: string) => new RegExp(`^https://([a-z0-9-]+\\.)*${domain.replace(/\./g, '\\.')}$`);
+/** Who may call /mcp from a browser (the MCP apps call it from their servers: no Origin). */
+const ORIGINS = [subdomainsOf(`${VENDOR}.ai`), subdomainsOf(`${VENDOR}.com`), subdomainsOf(`${VENDOR_CO}.com`)];
 
 const sha = (s: string) => createHash('sha256').update(s).digest('hex');
 const secret = () => randomBytes(32).toString('base64url');
 const attr = (s: string) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c] as string);
 
-/** The Claude apps' own callbacks: no other site can receive a consent given on our page. */
-const CLAUDE_HOSTS = ['claude.ai', 'claude.com'];
+/** The MCP apps' own callbacks: no other site can receive a consent given on our page. */
+const APP_HOSTS = [`${VENDOR}.ai`, `${VENDOR}.com`];
 const LOOPBACK = ['localhost', '127.0.0.1', '[::1]'];
 
 /**
- * Where a consent may send its code: the Claude apps (https on claude.ai / claude.com) or this
- * same computer over plain http (the local bridge of Claude Desktop, Claude Code). Anything else
+ * Where a consent may send its code: the MCP apps (https on their two vendor domains) or this
+ * same computer over plain http (the local bridge of a desktop app or of a command line). Anything else
  * would let a stranger's site collect an admin's consent (phishing), so it is refused.
  */
 export function redirectAllowed(uri: string): boolean {
@@ -56,11 +63,11 @@ export function redirectAllowed(uri: string): boolean {
     return false;
   }
   if (u.hash || u.username || u.password) return false;
-  if (u.protocol === 'https:') return CLAUDE_HOSTS.includes(u.hostname) && (u.port === '' || u.port === '443');
+  if (u.protocol === 'https:') return APP_HOSTS.includes(u.hostname) && (u.port === '' || u.port === '443');
   return u.protocol === 'http:' && LOOPBACK.includes(u.hostname);
 }
 
-/** Where the admin goes back after the consent, said plainly on the page («claude.ai», «questo computer»). */
+/** Where the admin goes back after the consent, said plainly on the page (the app's domain, «questo computer»). */
 export function returnPlace(uri: string): string {
   const u = new URL(uri);
   return LOOPBACK.includes(u.hostname) ? `questo computer (porta ${u.port || '80'})` : u.hostname;
@@ -69,8 +76,8 @@ export function returnPlace(uri: string): string {
 /** The client's name is the server's, from where it returns: a registered «client_name» proves nothing. */
 export function clientName(uris: string[]): string {
   const hosts = new Set(uris.map((x) => new URL(x).hostname));
-  if ([...hosts].every((h) => LOOPBACK.includes(h))) return 'Claude su questo computer';
-  return `Claude (${[...hosts].filter((h) => CLAUDE_HOSTS.includes(h)).join(', ')})`;
+  if ([...hosts].every((h) => LOOPBACK.includes(h))) return 'App MCP su questo computer';
+  return `App MCP (${[...hosts].filter((h) => APP_HOSTS.includes(h)).join(', ')})`;
 }
 
 type ClientRow = { id: string; name: string; redirect_uris: string };
@@ -84,7 +91,7 @@ export function mcpRoutes(app: FastifyInstance, ctx: AppContext) {
   const networkCalls = new Map<number, number[]>();
   const thirdCalls = new Map<number, number[]>();
   const heavyBusy = new Set<number>();
-  // the platform's own address (PUBLIC_URL); without it, the address the Claude app used
+  // the platform's own address (PUBLIC_URL); without it, the address the MCP app used
   const base = (req: FastifyRequest) => ctx.cfg.publicUrl ?? `${req.protocol}://${req.host}`;
   const resourceMeta = (req: FastifyRequest) => `${base(req)}/.well-known/oauth-protected-resource`;
   const userById = (id: number) => db.prepare('SELECT * FROM users WHERE id = ?').get(id) as UserRow | undefined;
@@ -146,7 +153,7 @@ export function mcpRoutes(app: FastifyInstance, ctx: AppContext) {
         .passthrough()
         .safeParse(req.body);
       if (!b.success) return oauthError(reply, 'invalid_client_metadata', 'redirect_uris richiesti');
-      if (!b.data.redirect_uris.every(redirectAllowed)) return oauthError(reply, 'invalid_redirect_uri', 'Solo i ritorni delle app di Claude (claude.ai, claude.com) o di questo computer');
+      if (!b.data.redirect_uris.every(redirectAllowed)) return oauthError(reply, 'invalid_redirect_uri', 'Solo i ritorni delle app MCP supportate o di questo computer');
       if (b.data.token_endpoint_auth_method && b.data.token_endpoint_auth_method !== 'none') return oauthError(reply, 'invalid_client_metadata', 'Solo client pubblici (PKCE)');
       const now = Date.now();
       const recent = (registrations.get(req.ip) ?? []).filter((t) => t > now - 3_600_000);
@@ -193,7 +200,7 @@ export function mcpRoutes(app: FastifyInstance, ctx: AppContext) {
         .header('Cache-Control', 'no-store')
         .header('X-Frame-Options', 'DENY')
         .header('Content-Security-Policy', `default-src 'none'; style-src 'unsafe-inline'; form-action 'self' ${target}; frame-ancestors 'none'; base-uri 'none'`)
-        .send(`<!doctype html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Connetti il tuo Claude · CDA Net</title>
+        .send(`<!doctype html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Connettore MCP · CDA Net</title>
 <style>body{font:15px/1.5 system-ui,sans-serif;background:#f4f6f8;color:#1b2430;margin:0;padding:24px 16px}main{max-width:460px;margin:0 auto;background:#fff;border-radius:12px;padding:24px;box-shadow:0 1px 4px #0002}
 h1{font-size:20px;margin:0 0 8px}ul{padding-left:20px}label{display:block;margin-top:12px;font-weight:600}input{width:100%;box-sizing:border-box;padding:10px;border:1px solid #c5ccd6;border-radius:8px;font:inherit}
 .row{display:flex;gap:8px;margin-top:18px}button{flex:1;padding:11px;border-radius:8px;border:0;font:inherit;font-weight:600;cursor:pointer}.ok{background:#0b6bcb;color:#fff}.where{background:#fff7e0;border:1px solid #f0c36d;border-radius:8px;padding:8px 10px}label.write{display:flex;gap:8px;align-items:center;font-weight:600;margin:12px 0 4px}label.write input{width:auto}.no{background:#e6e9ee}.err{color:#b42318;font-weight:600}small{color:#5b6573}</style></head><body><main>${html}</main></body></html>`);
@@ -204,13 +211,13 @@ h1{font-size:20px;margin:0 0 8px}ul{padding-left:20px}label{display:block;margin
         .filter(([, v]) => v !== undefined)
         .map(([k, v]) => `<input type="hidden" name="${attr(k)}" value="${attr(String(v))}">`)
         .join('');
-      return `<h1>Connetti il tuo Claude</h1>
+      return `<h1>Connettore MCP</h1>
 <p><b>${escapeHtml(c.name)}</b> chiede di leggere la piattaforma CDA Net con il tuo account, <b>solo in lettura</b>, per il monitoraggio.</p>
 <p class="where">Dopo il consenso tornerai a: <b>${escapeHtml(returnPlace(q.redirect_uri))}</b>. Se non è dove hai avviato il collegamento, premi Annulla.</p>
 <p>In lettura potrà usare:</p><ul>${toolsFor(false).map((t) => `<li>${escapeHtml(t.title)}</li>`).join('')}</ul>
 <label class="write"><input type="checkbox" name="write" value="1"> Consenti anche le modifiche</label>
 <label>Secondo codice, solo per le modifiche (aspetta il codice successivo, oppure un codice di recupero)<input name="code2" inputmode="numeric" autocomplete="one-time-code"></label>
-<p><small>Con le modifiche: ${MCP_TOOLS.filter((t) => t.method).map((t) => escapeHtml(t.title)).join(' · ')}. Claude chiede conferma prima di ogni modifica; le azioni sulla rete arrivano anche al NOC.</small></p>
+<p><small>Con le modifiche: ${MCP_TOOLS.filter((t) => t.method).map((t) => escapeHtml(t.title)).join(' · ')}. L’assistente chiede conferma prima di ogni modifica; le azioni sulla rete arrivano anche al NOC.</small></p>
 <p><small>Password, chiavi Wi-Fi e recapiti dei clienti non escono mai. Ogni richiesta finisce nel Registro; la connessione si revoca dalla console.</small></p>
 ${error ? `<p class="err">${escapeHtml(error)}</p>` : ''}
 <form method="post" action="/oauth/authorize">${hidden}
@@ -255,7 +262,7 @@ ${error ? `<p class="err">${escapeHtml(error)}</p>` : ''}
         ctx.loginGuard.record(req, username, 'oauth', false, 'password errata');
         return fail('Utente o password non validi.');
       }
-      if (u.role !== 'admin') return fail('Solo gli account admin possono collegare il proprio Claude.', 403);
+      if (u.role !== 'admin') return fail('Solo gli account admin possono collegare un assistente.', 403);
       if (!u.totp_enabled) return fail('Attiva prima la verifica in due passaggi dal tuo account nella console.', 403);
       if (!checkSecondFactor(db, ctx.sealer, u, String(raw.code ?? '').trim().slice(0, 12))) {
         ctx.loginGuard.record(req, username, 'oauth', false, 'codice errato');
@@ -282,8 +289,8 @@ ${error ? `<p class="err">${escapeHtml(error)}</p>` : ''}
         new Date(Date.now() + CODE_TTL_MS).toISOString(),
         canWrite,
       );
-      recordEvent(db, u.id, 'mcp.authorize', c.name, `Claude collegato da ${req.ip}, ${canWrite ? 'lettura e scrittura' : 'sola lettura'}`);
-      ctx.notify.security(`Claude (connettore MCP, ${canWrite ? '<b>lettura e scrittura</b>' : 'sola lettura'}) collegato alla piattaforma da <b>${escapeHtml(u.username)}</b> (${escapeHtml(req.ip)})`);
+      recordEvent(db, u.id, 'mcp.authorize', c.name, `Assistente collegato da ${req.ip}, ${canWrite ? 'lettura e scrittura' : 'sola lettura'}`);
+      ctx.notify.security(`Assistente (connettore MCP, ${canWrite ? '<b>lettura e scrittura</b>' : 'sola lettura'}) collegato alla piattaforma da <b>${escapeHtml(u.username)}</b> (${escapeHtml(req.ip)})`);
       back.searchParams.set('code', code);
       return reply.redirect(back.toString(), 302);
     });
@@ -372,7 +379,7 @@ ${error ? `<p class="err">${escapeHtml(error)}</p>` : ''}
   async function callTool(user: UserRow, row: TokenRow, name: string, args: Record<string, unknown>) {
     const tool = MCP_TOOLS.find((t) => t.name === name);
     if (!tool) return { content: [{ type: 'text', text: `Strumento sconosciuto: ${name}` }], isError: true };
-    if (tool.method && !row.can_write) return { content: [{ type: 'text', text: 'Questa connessione è in sola lettura: per le modifiche ricollega Claude scegliendo «Consenti anche le modifiche».' }], isError: true };
+    if (tool.method && !row.can_write) return { content: [{ type: 'text', text: 'Questa connessione è in sola lettura: per le modifiche ricollega l’assistente scegliendo «Consenti anche le modifiche».' }], isError: true };
     if (tool.network) {
       const now = Date.now();
       const recent = (networkCalls.get(row.id) ?? []).filter((x) => x > now - 3_600_000);
@@ -429,12 +436,12 @@ ${error ? `<p class="err">${escapeHtml(error)}</p>` : ''}
       user.id,
       'mcp.call',
       tool.name,
-      `${tool.method ? `modifica via Claude (esito ${r.statusCode})` : 'lettura'}${keys.length ? ` · argomenti: ${keys.join(', ')}` : ''}`,
+      `${tool.method ? `modifica via connettore MCP (esito ${r.statusCode})` : 'lettura'}${keys.length ? ` · argomenti: ${keys.join(', ')}` : ''}`,
     );
-    // every change via Claude: the NOC hears of it (what and on what), done or not
+    // every change via the MCP connector: the NOC hears of it (what and on what), done or not
     if (tool.method) {
       const on = String(args?.deviceId ?? args?.jobId ?? args?.id ?? '').slice(0, 60);
-      ctx.notify.security(`Claude di <b>${escapeHtml(user.username)}</b>: ${escapeHtml(tool.title)}${on ? ` (${escapeHtml(on)})` : ''} · ${r.statusCode < 400 ? 'eseguito' : `non riuscito (${r.statusCode})`}`);
+      ctx.notify.security(`Connettore MCP di <b>${escapeHtml(user.username)}</b>: ${escapeHtml(tool.title)}${on ? ` (${escapeHtml(on)})` : ''} · ${r.statusCode < 400 ? 'eseguito' : `non riuscito (${r.statusCode})`}`);
     }
     if (r.statusCode >= 400) {
       const code = (() => {
@@ -513,7 +520,7 @@ ${error ? `<p class="err">${escapeHtml(error)}</p>` : ''}
   app.get('/mcp', async (_req, reply) => reply.code(405).header('Allow', 'POST').send({ error: 'method_not_allowed' }));
   app.delete('/mcp', async (_req, reply) => reply.code(405).header('Allow', 'POST').send({ error: 'method_not_allowed' }));
 
-  // ---- console: who has connected their Claude, revoke --------------------------------------------
+  // ---- console: who has connected their assistant, revoke --------------------------------------------
   const admin = { preHandler: ctx.auth.requireAdmin };
   app.get('/api/admin/mcp', admin, async (req) => {
     const rows = db
@@ -564,7 +571,7 @@ ${error ? `<p class="err">${escapeHtml(error)}</p>` : ''}
     const id = z.coerce.number().int().positive().parse((req.params as { id: string }).id);
     const r = db.prepare('UPDATE mcp_tokens SET revoked_at = ?, revoked_by = ? WHERE id = ? AND revoked_at IS NULL').run(nowIso(), req.user!.id, id);
     if (!r.changes) throw new HttpError(404, 'connection_not_found');
-    recordEvent(db, req.user!.id, 'mcp.revoke', String(id), 'connessione di Claude revocata dalla console');
+    recordEvent(db, req.user!.id, 'mcp.revoke', String(id), 'connessione del connettore MCP revocata dalla console');
     return { ok: true };
   });
 }

@@ -10,19 +10,19 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-/** «Assistente AI» in the app: who sees the tab and how «Consenti» is confirmed. */
+/** «Approvazioni dei PC» in the app: who sees the tab and how «Consenti» is confirmed. */
 class AiAssistantTest {
     private fun saved(strong: Boolean, persistent: Boolean) =
         QuickLogin.Saved(backend = "https://app.example.invalid", username = "admin", deviceId = "00000000-0000-4000-8000-000000000000", iv = "", data = "", strong = strong, persistent = persistent)
 
     @Test
     fun tabOnlyForAdminsWithTheModuleOn() {
-        assertTrue("Assistente AI" in networkTabTitles(mapOf("ai_assistant" to true), admin = true, isAdmin = true))
-        assertFalse("off by default", "Assistente AI" in networkTabTitles(emptyMap(), admin = true, isAdmin = true))
-        assertFalse("specialist with full view: no", "Assistente AI" in networkTabTitles(mapOf("ai_assistant" to true), admin = true, isAdmin = false))
+        assertTrue("Approvazioni dei PC" in networkTabTitles(mapOf("ai_assistant" to true), admin = true, isAdmin = true))
+        assertFalse("off by default", "Approvazioni dei PC" in networkTabTitles(emptyMap(), admin = true, isAdmin = true))
+        assertFalse("specialist with full view: no", "Approvazioni dei PC" in networkTabTitles(mapOf("ai_assistant" to true), admin = true, isAdmin = false))
         assertEquals(
             "existing tabs unchanged",
-            listOf("Stato", "IA-AP", "Albo", "Guasti", "Aree e avvisi", "AP vicini"),
+            listOf("Stato", "Assistente rete", "Albo", "Guasti", "Aree e avvisi", "AP vicini"),
             networkTabTitles(mapOf("albo" to true), admin = true),
         )
     }

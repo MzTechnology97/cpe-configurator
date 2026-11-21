@@ -5,9 +5,9 @@ import { toast } from '../lib/toast';
 import { AsyncButton, Badge, Button, Card, EmptyState, Field, Notice, PageHeader, Segmented, Skeleton, Table } from '../ui';
 
 /**
- * «Connetti il tuo Claude» (admins): the address of the MCP server of the platform, how to
- * add it to Claude (Desktop with mcp-remote while the server has no public certificate, the
- * connectors of Claude with a domain, Claude Code), what Claude can read and change, and every
+ * «Connettore MCP» (admins): the address of the MCP server of the platform, how to add it to an
+ * MCP assistant (the desktop app with mcp-remote while the server has no public certificate, a
+ * custom connector with a domain), what the assistant can read and change, and every
  * connection of the admins (read only, or read and write) with its use and the revoke. The consent
  * itself is given on the platform's own page (user, password and second step; changes only with a
  * second fresh code), never here.
@@ -32,7 +32,7 @@ async function copy(text: string, what: string) {
   }
 }
 
-export function Claude() {
+export function ConnettoreMcp() {
   const q = useQuery({ queryKey: ['admin', 'mcp'], queryFn: () => api<Mcp>('/api/admin/mcp') });
   const me = useQuery({ queryKey: ['auth', 'account'], queryFn: () => api<{ username: string; totpEnabled: boolean }>('/api/auth/account') });
   const [show, setShow] = useState<'active' | 'all'>('active');
@@ -47,7 +47,7 @@ export function Claude() {
   };
   const d = q.data;
   const revoke = async (c: Conn) => {
-    if (!confirm(`Revocare la connessione di ${c.username} (${c.client})? Claude non potrà più leggere la piattaforma finché non si ricollega.`)) return;
+    if (!confirm(`Revocare la connessione di ${c.username} (${c.client})? L’assistente non potrà più leggere la piattaforma finché non si ricollega.`)) return;
     await api(`/api/admin/mcp/connections/${c.id}`, { method: 'DELETE' });
     toast('Connessione revocata');
     await q.refetch();
@@ -56,15 +56,14 @@ export function Claude() {
   const desktop = d
     ? JSON.stringify({ mcpServers: { cdanet: { command: 'npx', args: ['-y', 'mcp-remote', d.url], env: { NODE_EXTRA_CA_CERTS: 'C:\\cdanet\\cdanet-ca.crt' } } } }, null, 2)
     : '';
-  const code = d ? `claude mcp add --transport http cdanet ${d.url}` : '';
   return (
     <div className="ui-page">
-      <PageHeader icon="monitor_heart" title="Connetti il tuo Claude" subtitle="Claude legge la piattaforma per il monitoraggio (stato rete, interruzioni, batterie dei POP, avvisi, interventi, magazzino, diagnosi) e, solo se lo consenti, fa anche modifiche." />
+      <PageHeader icon="monitor_heart" title="Connettore MCP" subtitle="Un assistente compatibile MCP legge la piattaforma per il monitoraggio (stato rete, interruzioni, batterie dei POP, avvisi, interventi, magazzino, diagnosi) e, solo se lo consenti, fa anche modifiche." />
       {q.error && <Notice tone="bad">{(q.error as Error).message}</Notice>}
       {!d && !q.error && <Skeleton lines={8} />}
       {me.data && !me.data.totpEnabled && (
         <Notice tone="bad">
-          Per collegare Claude serve la verifica in due passaggi sul tuo account: attivala in <a href="#/account">Il mio account</a>.
+          Per collegare un assistente serve la verifica in due passaggi sul tuo account: attivala in <a href="#/account">Il mio account</a>.
         </Notice>
       )}
       {d && (
@@ -75,32 +74,25 @@ export function Claude() {
               <Button onClick={() => void copy(d.url, 'Indirizzo')}>Copia</Button>
             </div>
             <p className="ui-muted ui-small cn-p">
-              Al primo uso Claude apre la pagina di consenso della piattaforma: utente, password e codice di verifica, poi «Consenti». La pagina dice dove tornerai (claude.ai o questo computer): se non è il posto da cui sei partito, annulla. Senza la casella «Consenti anche le modifiche» la connessione resta in sola lettura; per le modifiche serve un secondo codice di verifica nuovo, e per passare da lettura a scrittura un nuovo consenso.
+              Al primo uso l’assistente apre la pagina di consenso della piattaforma: utente, password e codice di verifica, poi «Consenti». La pagina dice dove tornerai (il sito dell’assistente o questo computer): se non è il posto da cui sei partito, annulla. Senza la casella «Consenti anche le modifiche» la connessione resta in sola lettura; per le modifiche serve un secondo codice di verifica nuovo, e per passare da lettura a scrittura un nuovo consenso.
             </p>
           </Card>
 
           <Card title="Come collegarlo">
             <section className="cn-provider">
-              <h3>Claude Desktop sul PC (server senza dominio pubblico)</h3>
+              <h3>App desktop sul PC (server senza dominio pubblico)</h3>
               <p className="ui-muted ui-small cn-p">
-                Il PC deve raggiungere il server (ufficio o VPN) e avere Node.js. Salva il certificato della piattaforma (sul server: <code>sudo cdanet-cpe https-ca</code>) per esempio in <code>C:\cdanet\cdanet-ca.crt</code>, poi in Claude Desktop → Impostazioni → Sviluppatore → «Modifica configurazione» aggiungi:
+                Il PC deve raggiungere il server (ufficio o VPN) e avere Node.js. Salva il certificato della piattaforma (sul server: <code>sudo cdanet-cpe https-ca</code>) per esempio in <code>C:\cdanet\cdanet-ca.crt</code>, poi nella configurazione dei server MCP dell’app desktop aggiungi:
               </p>
               <pre className="mcp-pre">{desktop}</pre>
               <div className="ui-row">
                 <Button onClick={() => void copy(desktop, 'Configurazione')}>Copia configurazione</Button>
               </div>
-              <p className="ui-muted ui-small cn-p">Riavvia Claude Desktop. mcp-remote è un ponte open source di terze parti; funziona solo sul PC.</p>
+              <p className="ui-muted ui-small cn-p">Riavvia l’app. mcp-remote è un ponte open source di terze parti; funziona solo sul PC.</p>
             </section>
             <section className="cn-provider">
-              <h3>Claude (web, Desktop e telefono) con un dominio e un certificato valido</h3>
-              <p className="ui-muted ui-small cn-p">Impostazioni → Connettori → «Aggiungi connettore personalizzato» → incolla l’indirizzo qui sopra. Il connettore resta legato al tuo account Claude, anche nell’app del telefono.</p>
-            </section>
-            <section className="cn-provider">
-              <h3>Claude Code</h3>
-              <pre className="mcp-pre">{code}</pre>
-              <div className="ui-row">
-                <Button onClick={() => void copy(code, 'Comando')}>Copia comando</Button>
-              </div>
+              <h3>Web, desktop e telefono con un dominio e un certificato valido</h3>
+              <p className="ui-muted ui-small cn-p">Nelle impostazioni dell’assistente aggiungi un connettore personalizzato e incolla l’indirizzo qui sopra. Il connettore resta legato al tuo account, anche nell’app del telefono.</p>
             </section>
           </Card>
 
@@ -108,7 +100,7 @@ export function Claude() {
             {[
               { title: 'Leggere', list: d.tools.filter((t) => !t.write), note: 'Con ogni connessione.' },
               { title: 'Modificare', list: d.tools.filter((t) => t.write && !t.network), note: 'Solo con «lettura e scrittura». Ogni modifica arriva come avviso al NOC.' },
-              { title: 'Agire sulla rete', list: d.tools.filter((t) => t.network), note: 'Solo con «lettura e scrittura»: una CPE alla volta, al massimo 5 azioni all’ora per connessione, e Claude chiede conferma a ogni azione.' },
+              { title: 'Agire sulla rete', list: d.tools.filter((t) => t.network), note: 'Solo con «lettura e scrittura»: una CPE alla volta, al massimo 5 azioni all’ora per connessione, e l’assistente chiede conferma a ogni azione.' },
             ]
               .filter((g) => g.list.length)
               .map((g) => (
@@ -123,7 +115,7 @@ export function Claude() {
                 </section>
               ))}
             <p className="ui-muted ui-small cn-p">
-              Mai password, chiavi, token o segreti; mai telefoni, email o codici fiscali dei clienti; elenchi fino a 200 elementi. Fuori da Claude restano account e ruoli, connettori, impostazioni del server, informativa privacy, sblocco degli accessi e revoca delle connessioni, password PPPoE, chiavi Wi-Fi e nuovi subscriber. Ogni richiesta finisce nel Registro con il nome dello strumento. Quello che Claude legge passa da Anthropic: per i dati dei clienti serve l’accordo sul trattamento dei dati (DPA).
+              Mai password, chiavi, token o segreti; mai telefoni, email o codici fiscali dei clienti; elenchi fino a 200 elementi. Fuori dal connettore restano account e ruoli, connettori, impostazioni del server, informativa privacy, sblocco degli accessi e revoca delle connessioni, password PPPoE, chiavi Wi-Fi e nuovi subscriber. Ogni richiesta finisce nel Registro con il nome dello strumento. Quello che l’assistente legge passa dal suo fornitore: per i dati dei clienti serve l’accordo sul trattamento dei dati (DPA).
             </p>
           </Card>
 
@@ -179,7 +171,7 @@ export function Claude() {
                 rowKey={(c) => c.id}
                 columns={[
                   { label: 'Admin', render: (c) => <strong>{c.username}</strong> },
-                  { label: 'Claude', render: (c) => c.client },
+                  { label: 'App', render: (c) => c.client },
                   { label: 'Permessi', render: (c) => (c.canWrite ? <Badge tone="warn">lettura e scrittura</Badge> : <Badge tone="neutral">sola lettura</Badge>) },
                   { label: 'Collegato', render: (c) => <span className="ui-small">{date(c.createdAt)}</span> },
                   { label: 'Ultimo uso', render: (c) => <span className="ui-small">{date(c.lastUsedAt)}</span> },
@@ -200,7 +192,7 @@ export function Claude() {
                 ]}
               />
             ) : (
-              <EmptyState icon="link" title={show === 'active' ? 'Nessun Claude collegato' : 'Nessuna connessione'}>
+              <EmptyState icon="link" title={show === 'active' ? 'Nessun assistente collegato' : 'Nessuna connessione'}>
                 Le connessioni compaiono qui dopo il consenso. Una connessione cade da sola se l’admin viene disattivato, perde il ruolo, cambia password o toglie la verifica in due passaggi.
               </EmptyState>
             )}

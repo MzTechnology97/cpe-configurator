@@ -588,7 +588,7 @@ export function AntennasTab() {
         <p className="ui-muted">{onlyTodo ? 'Tutti gli AP con clienti hanno azimut e antenna.' : 'Nessun AP.'}</p>
       )}
       <p className="ui-small ui-muted">
-        Con antenna e azimut la copertura usa il diagramma vero (orizzontale; anche verticale se indichi il tilt meccanico: quello elettrico è già nel diagramma). L’azimut suggerito è il centro dell’arco dei clienti collegati: confermalo solo se torna con l’antenna reale. IA-AP segnala gli AP senza azimut e i Rocket senza antenna indicata.
+        Con antenna e azimut la copertura usa il diagramma vero (orizzontale; anche verticale se indichi il tilt meccanico: quello elettrico è già nel diagramma). L’azimut suggerito è il centro dell’arco dei clienti collegati: confermalo solo se torna con l’antenna reale. Assistente rete segnala gli AP senza azimut e i Rocket senza antenna indicata.
       </p>
     </div>
   );

@@ -11,7 +11,7 @@ type AdminRow = SecondFactorUser & { active: number; role: string; token_version
 
 /**
  * A fresh second-step code of an admin who has the second step on (anti-replay inside), for the
- * sensitive actions of the «Assistente AI» and «Conoscenza AI» pages. One count of wrong attempts
+ * sensitive actions of the «Approvazioni dei PC» and «Memorie di lavoro» pages. One count of wrong attempts
  * for all of them, so trying on two pages does not double the guesses.
  */
 export function createFreshCode(db: Db, sealer: Sealer) {

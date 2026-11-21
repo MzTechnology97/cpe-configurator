@@ -95,9 +95,9 @@ export interface AppContext {
   threats: Threats;
   operatorSites: OperatorSites;
   ottMonitor: OttMonitor;
-  /** «Assistente AI»: the agents on the PCs and the permission requests of their AIs. */
+  /** «Approvazioni dei PC»: the agents on the PCs and the permission requests of their AIs. */
   aiAssistant: AiAssistant;
-  /** «Conoscenza AI»: the shared memories read from the private repository. */
+  /** «Memorie di lavoro»: the shared memories read from the private repository. */
   aiMemory: AiMemory;
   /** Fresh second-step codes for sensitive admin actions, one count of wrong attempts. */
   freshCode: FreshCode;

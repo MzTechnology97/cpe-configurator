@@ -18,7 +18,7 @@ import {
 } from '../domain/optimizer.ts';
 
 /**
- * IA-AP automatic optimisation (admins, only when Impostazioni server allows it): on one AP at a
+ * Assistente rete automatic optimisation (admins, only when Impostazioni server allows it): on one AP at a
  * time, tries the suggested channel or the best ones of its spectrum through UISP, waits for every
  * CPE to come back, compares the links before and after and keeps a channel only when it is really
  * better. Otherwise, or when a CPE does not come back, the original channel is restored and the
@@ -182,13 +182,13 @@ export function createOptimizer(ctx: AppContext, opts: { timing?: Partial<Optimi
   function notify(run: Run) {
     const ch = (c: { centre: number; width: number } | null) => (c ? `${c.centre}/${c.width} MHz` : '—');
     const titles: Record<Outcome, string> = {
-      migliorato: `✅ IA-AP: ${run.apName} migliorato, ora su ${ch(run.kept)}`,
-      ripristinato: `↩️ IA-AP: ${run.apName}, nessun canale migliore, ripristinato ${ch(run.original)}`,
-      cpe_mancanti: `⚠️ IA-AP: ${run.apName}, CPE non riagganciate: ripristinato ${ch(run.original)}`,
-      ripristino_incompleto: `🚨 IA-AP: ${run.apName}, dopo il ripristino mancano ancora ${run.missing.length} CPE`,
-      annullato: `IA-AP: ottimizzazione di ${run.apName} annullata, ripristinato ${ch(run.original)}`,
-      interrotto: `⚠️ IA-AP: ottimizzazione di ${run.apName} interrotta dal riavvio del server, ripristinato ${ch(run.original)}`,
-      errore: `⚠️ IA-AP: ottimizzazione di ${run.apName} non riuscita`,
+      migliorato: `✅ Assistente rete: ${run.apName} migliorato, ora su ${ch(run.kept)}`,
+      ripristinato: `↩️ Assistente rete: ${run.apName}, nessun canale migliore, ripristinato ${ch(run.original)}`,
+      cpe_mancanti: `⚠️ Assistente rete: ${run.apName}, CPE non riagganciate: ripristinato ${ch(run.original)}`,
+      ripristino_incompleto: `🚨 Assistente rete: ${run.apName}, dopo il ripristino mancano ancora ${run.missing.length} CPE`,
+      annullato: `Assistente rete: ottimizzazione di ${run.apName} annullata, ripristinato ${ch(run.original)}`,
+      interrotto: `⚠️ Assistente rete: ottimizzazione di ${run.apName} interrotta dal riavvio del server, ripristinato ${ch(run.original)}`,
+      errore: `⚠️ Assistente rete: ottimizzazione di ${run.apName} non riuscita`,
     };
     const lines = [
       ...run.results.map((r) => `${r.centre}/${r.width} MHz: ${r.verdict.replace('_', ' ')}${r.capacityRatio !== null ? `, capacità ${r.capacityRatio >= 1 ? '+' : ''}${Math.round((r.capacityRatio - 1) * 100)}%` : ''}${r.missing.length ? `, mancano ${r.missing.length} CPE` : ''}`),
