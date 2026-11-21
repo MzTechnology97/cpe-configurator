@@ -1,6 +1,6 @@
 # Ponte Telegram del bot del team
 
-Il bot del gruppo delle segnalazioni gira sul server come piccolo servizio a sé. È **un solo poller**, sempre acceso, e non dipende da un PC o da una sessione di Claude aperta.
+Il bot del gruppo delle segnalazioni gira sul server come piccolo servizio a sé. È **un solo poller**, sempre acceso, e non dipende da un PC o da una sessione di un assistente aperta.
 
 - `bridge.mjs` legge i messaggi delle chat ammesse e li salva in `data/inbox.jsonl`:
   - foto, file, video e vocali vanno in `data/files`;
@@ -30,4 +30,4 @@ Avvio: `sudo docker compose up -d`. Log: `sudo docker logs telegram-bridge`.
 
 ## Una regola sola
 
-Un bot si legge da **un posto solo**. Se il servizio scrive «un altro programma legge lo stesso bot (409)», c'è ancora un altro programma che usa lo stesso token, per esempio il plugin Telegram di Claude sul PC: va chiuso.
+Un bot si legge da **un posto solo**. Se il servizio scrive «un altro programma legge lo stesso bot (409)», c'è ancora un altro programma che usa lo stesso token, per esempio il plugin Telegram di un assistente sul PC: va chiuso.

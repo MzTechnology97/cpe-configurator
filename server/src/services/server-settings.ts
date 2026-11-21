@@ -267,7 +267,7 @@ export const SERVER_SETTINGS: Def[] = [
   },
   {
     key: 'advisorAutoOptimize', env: 'ADVISOR_AUTO_OPTIMIZE', group: 'Assistente rete', label: 'Ottimizzazione automatica degli AP tramite UISP', kind: 'bool',
-    help: 'Permette agli amministratori di far provare all’IA-AP il canale consigliato (o i migliori dello spettro) su un AP: cambia il canale tramite UISP, aspetta che tutte le CPE si riaggancino, confronta i collegamenti e tiene il canale solo se è davvero migliore, altrimenti torna a quello iniziale. Un AP alla volta, sempre dopo la conferma di un amministratore. Spento = l’assistente dà solo consigli.',
+    help: 'Permette agli amministratori di far provare all’Assistente rete il canale consigliato (o i migliori dello spettro) su un AP: cambia il canale tramite UISP, aspetta che tutte le CPE si riaggancino, confronta i collegamenti e tiene il canale solo se è davvero migliore, altrimenti torna a quello iniziale. Un AP alla volta, sempre dopo la conferma di un amministratore. Spento = l’assistente dà solo consigli.',
     get: (c) => c.advisorAutoOptimize, set: (c, v) => (c.advisorAutoOptimize = !!v),
   },
   {

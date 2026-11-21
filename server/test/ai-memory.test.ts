@@ -56,7 +56,7 @@ async function codes(call: Awaited<ReturnType<typeof setup>>['call']) {
   return () => left.shift()!;
 }
 
-describe('Conoscenza AI (modulo ai_memory)', () => {
+describe('Memorie di lavoro (modulo ai_memory)', () => {
   it('reads only the Markdown of the two folders, refuses files with secrets and tells the NOC', async () => {
     const { ctx, call } = await setup();
     assert.equal((await call('GET', '/api/admin/ai/memory')).statusCode, 404, 'module off');

@@ -6,9 +6,9 @@ import { toast } from '../lib/toast';
 import { AsyncButton, Badge, Button, Card, EmptyState, Field, Notice, PageHeader, Segmented, Skeleton, Table } from '../ui';
 
 /**
- * «Assistente AI» (module ai_assistant, admins): the AIs working on the PCs with Continuity ask for
+ * «Approvazioni dei PC» (module ai_assistant, admins): the AIs working on the PCs with Continuity ask for
  * permission; the admin who owns the agent denies with a tap or allows with a fresh code. The text
- * of a request is written by an AI: shown as plain monospaced text, never as markup. Requests the
+ * of a request is written by an assistant: shown as plain monospaced text, never as markup. Requests the
  * PC keeps for itself (git push, credentials, network devices) can only be denied from here.
  */
 
@@ -60,7 +60,7 @@ const STATE: Record<Request['state'], { label: string; tone: 'good' | 'bad' | 'w
 /** Seen in the last 2 minutes: the agent is connected. */
 const online = (a: Agent) => !!a.lastSeenAt && Date.now() - Date.parse(a.lastSeenAt) < 120_000;
 
-export function AiAssistant() {
+export function ApprovazioniPc() {
   const agents = useQuery({ queryKey: [...keys.ai, 'agents'], queryFn: () => api<{ agents: Agent[]; maxDays: number }>('/api/admin/ai/agents'), refetchInterval: 30_000 });
   const pending = useQuery({ queryKey: [...keys.ai, 'pending'], queryFn: () => api<{ requests: Request[] }>('/api/admin/ai/requests?state=pending'), refetchInterval: 15_000 });
   const history = useQuery({ queryKey: [...keys.ai, 'history'], queryFn: () => api<{ requests: Request[] }>('/api/admin/ai/requests') });
@@ -105,7 +105,7 @@ export function AiAssistant() {
   const mine = (r: Request) => me.data?.username === r.owner;
   return (
     <div className="ui-page">
-      <PageHeader icon="memory" title="Assistente AI" subtitle="Le AI che lavorano sui PC con Continuity chiedono il permesso per i comandi: nega con un tocco, consenti con un codice di verifica nuovo." />
+      <PageHeader icon="memory" title="Approvazioni dei PC" subtitle="Gli assistenti che lavorano sui PC con Continuity chiedono il permesso per i comandi: nega con un tocco, consenti con un codice di verifica nuovo." />
       {me.data && !me.data.totpEnabled && (
         <Notice tone="bad">
           Serve la verifica in due passaggi sul tuo account: attivala in <a href="#/account">Il mio account</a>.
@@ -117,7 +117,7 @@ export function AiAssistant() {
         {!pending.data && !pending.error && <Skeleton lines={3} />}
         {pending.data && !pending.data.requests.length && (
           <EmptyState icon="check_circle" title="Nessuna richiesta">
-            Quando un’AI chiede il permesso per un comando ricevi una notifica (app, Notifiche e Telegram personale, senza il comando). Senza risposta entro 10 minuti la richiesta vale «negata».
+            Quando un assistente chiede il permesso per un comando ricevi una notifica (app, Notifiche e Telegram personale, senza il comando). Senza risposta entro 10 minuti la richiesta vale «negata».
           </EmptyState>
         )}
         {pending.data?.requests.map((r) => (
@@ -125,11 +125,11 @@ export function AiAssistant() {
             <div className="ui-row">
               <strong>{r.agent}</strong>
               <span className="ui-muted ui-small">
-                {r.ai || 'AI'} · {r.tool} · {date(r.createdAt)} · scade {date(r.expiresAt)}
+                {r.ai || 'assistente'} · {r.tool} · {date(r.createdAt)} · scade {date(r.expiresAt)}
               </span>
               {r.localOnly && <Badge tone="warn">solo dal PC</Badge>}
             </div>
-            <p className="ui-muted ui-small">Testo generato dall’AI, ripulito dei segreti: leggilo prima di decidere.</p>
+            <p className="ui-muted ui-small">Testo generato dall’assistente, ripulito dei segreti: leggilo prima di decidere.</p>
             <pre className="mcp-pre ai-cmd">{r.detail || (mine(r) ? '(nessun dettaglio)' : `Il testo del comando lo vede solo ${r.owner}.`)}</pre>
             {!mine(r) ? (
               <p className="ui-muted ui-small">Decide l’amministratore che possiede l’agente ({r.owner}).</p>
@@ -186,7 +186,7 @@ export function AiAssistant() {
               { label: 'PC', render: (a) => <strong>{a.name}</strong> },
               { label: 'Admin', render: (a) => a.owner },
               { label: 'Stato', render: (a) => (!a.active ? <Badge tone="neutral">{a.revokedAt ? 'revocato' : 'scaduto'}</Badge> : online(a) ? <Badge tone="good">collegato</Badge> : <Badge tone="neutral">non collegato</Badge>) },
-              { label: 'Sessioni AI', render: (a) => (a.sessions.length ? a.sessions.map((s) => <div key={s.ref} className="ui-small">{`${s.project || '—'} · ${s.ai} · ${s.state}${s.goal ? ` · ${s.goal}` : ''}`}</div>) : <span className="ui-muted ui-small">nessuna</span>) },
+              { label: 'Sessioni', render: (a) => (a.sessions.length ? a.sessions.map((s) => <div key={s.ref} className="ui-small">{`${s.project || '—'} · ${s.ai} · ${s.state}${s.goal ? ` · ${s.goal}` : ''}`}</div>) : <span className="ui-muted ui-small">nessuna</span>) },
               { label: 'In attesa', render: (a) => a.pending },
               { label: 'Ultimo contatto', render: (a) => <span className="ui-small">{date(a.lastSeenAt)}</span> },
               { label: 'Scade', render: (a) => <span className="ui-small">{date(a.expiresAt)}</span> },
@@ -203,7 +203,7 @@ export function AiAssistant() {
           />
         ) : (
           <EmptyState icon="link" title="Nessun PC collegato">
-            Crea un agente qui sotto e avvia sul PC (utente Windows dedicato alle AI) l’agente della piattaforma con il token.
+            Crea un agente qui sotto e avvia sul PC (utente Windows dedicato agli assistenti) l’agente della piattaforma con il token.
           </EmptyState>
         )}
       </Card>

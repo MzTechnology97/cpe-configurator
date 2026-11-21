@@ -4,7 +4,7 @@ Piattaforma CDA Net (AS200034) per installare, collaudare e seguire le CPE Ubiqu
 
 | Componente | Cartella | Ruolo |
 |---|---|---|
-| **Server** | [`server/`](server) | Node.js 24 + TypeScript. Unica fonte della policy CDA Net: account e ruoli, segreti cifrati, template airOS, **generazione del `system.cfg` finale**, storico e collaudi, interventi, copertura, integrazioni (UISP, ISP Billing, Victron, MyWic, Telegram, Firebase), connettore MCP per Claude, canale aggiornamenti Android. |
+| **Server** | [`server/`](server) | Node.js 24 + TypeScript. Unica fonte della policy CDA Net: account e ruoli, segreti cifrati, template airOS, **generazione del `system.cfg` finale**, storico e collaudi, interventi, copertura, integrazioni (UISP, ISP Billing, Victron, MyWic, Telegram, Firebase), connettore MCP per gli assistenti, canale aggiornamenti Android. |
 | **Console web** | [`console/`](console) → `web/app` | React 19 + Vite, servita dal server: NOC, amministrazione, copertura e le pagine degli installatori e degli Specialist. In [`web/`](web) restano i file serviti così come sono e la guida installatore (`web/wiki`). |
 | **App Android** | [`android/`](android) | Kotlin + Jetpack Compose. Client di campo: interventi del giorno, installazione guidata con discovery Ubiquiti, scrittura sulla CPE anche senza Internet, puntamento, collaudo con speedtest e foto, copertura e realtà aumentata, strumenti LAN (Wi-Fi, scansione, SNMP, TVCC, RouterOS). |
 | **Deploy** | [`deploy/`](deploy) | Docker Compose con immagine pubblicata dalla CI su GHCR, reverse proxy Caddy e **container updater con rollback automatico**. |
@@ -75,12 +75,12 @@ Per l'app Android:
 - [docs/PROVISIONING.md](docs/PROVISIONING.md): template airOS, segnaposto, firmware, collaudo al banco
 - [docs/FIELD-TOOLS.md](docs/FIELD-TOOLS.md): l'app sul campo, dall'intervento al collaudo, e gli strumenti
 - [docs/COPERTURA.md](docs/COPERTURA.md): verifica di copertura, stima del segnale, simulazioni, altri operatori, fattibilità
-- [docs/NOC.md](docs/NOC.md): interventi, collaudi, Salute CPE, diagnosi, magazzino, avvisi, IA-AP, report, backup
+- [docs/NOC.md](docs/NOC.md): interventi, collaudi, Salute CPE, diagnosi, magazzino, avvisi, Assistente rete, report, backup
 - [docs/SPECIALIST-GRUPPI.md](docs/SPECIALIST-GRUPPI.md): Specialist, gruppi di lavoro e direttore tecnico
 - [docs/UISP.md](docs/UISP.md), [docs/CRM.md](docs/CRM.md): integrazioni con UISP e ISP Billing
 - [docs/STATO-RETE.md](docs/STATO-RETE.md), [docs/GUASTI-ENEL.md](docs/GUASTI-ENEL.md), [docs/MAPPE.md](docs/MAPPE.md)
 - [docs/NOTIFICHE.md](docs/NOTIFICHE.md), [docs/MODULI.md](docs/MODULI.md)
-- [docs/MCP.md](docs/MCP.md): Connetti il tuo Claude
+- [docs/MCP.md](docs/MCP.md): Connettore MCP
 - [docs/ACCESSI-BLOCCATI.md](docs/ACCESSI-BLOCCATI.md), [SECURITY.md](SECURITY.md)
 - [docs/DEPLOY.md](docs/DEPLOY.md): installazione Debian, auto-update, firma APK, backup
 - [docs/GOOGLE-PLAY.md](docs/GOOGLE-PLAY.md): pubblicazione dell'app su Google Play

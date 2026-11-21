@@ -14,7 +14,7 @@ export interface SecondFactorUser {
 
 /**
  * TOTP code (anti-replay) or one-time recovery code; consumes what it uses. Shared by the login
- * and by the consent of a Claude connection (MCP), which asks for the same two steps.
+ * and by the consent of an MCP connection, which asks for the same two steps.
  */
 export function checkSecondFactor(db: Db, sealer: Sealer, u: SecondFactorUser, code: string): boolean {
   if (looksLikeRecoveryCode(code) && !/^\d{6}$/.test(code)) {

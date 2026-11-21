@@ -6,7 +6,7 @@ import { keys } from '../lib/query';
 import { AsyncButton, Badge, Button, Card, Field, Icon, Notice, PageHeader, Segmented } from '../ui';
 
 /**
- * IA-AP (admins): what to fix on APs and CPEs, from UISP (stations, a week of statistics, the
+ * Assistente rete (admins): what to fix on APs and CPEs, from UISP (stations, a week of statistics, the
  * spectrum measured by APs and CPEs) and the coverage model, refreshed every hour and on the
  * server's events. Two panes on wide screens: the APs (or the kinds of problem) on the left, the
  * selected one on the right. The automatic optimisation of a channel acts on a real AP: it starts
@@ -60,7 +60,7 @@ const OUTCOME: Record<string, [string, Tone]> = {
 };
 const VERDICT: Record<string, string> = { migliore: 'migliore', peggiore: 'peggiore', uguale: 'nessuna differenza', cpe_mancanti: 'CPE mancanti' };
 const OPTIMIZE_TEXT = (ap: string) =>
-  `L’IA-AP cambierà il canale di ${ap} tramite UISP. A ogni prova le CPE si sganciano per circa un minuto; dopo ogni cambio aspetta che tornino tutte, misura per qualche minuto e confronta con prima. Tiene un canale solo se la capacità sale di almeno il 5% senza peggiorare SNR e cliente più debole; altrimenti, o se una CPE non torna entro 5 minuti, rimette il canale iniziale e avvisa gli admin. Circa 10 minuti per prova.`;
+  `L’Assistente rete cambierà il canale di ${ap} tramite UISP. A ogni prova le CPE si sganciano per circa un minuto; dopo ogni cambio aspetta che tornino tutte, misura per qualche minuto e confronta con prima. Tiene un canale solo se la capacità sale di almeno il 5% senza peggiorare SNR e cliente più debole; altrimenti, o se una CPE non torna entro 5 minuti, rimette il canale iniziale e avvisa gli admin. Circa 10 minuti per prova.`;
 const PARAM: Record<string, [string, (v: unknown) => string]> = { frequenza: ['Frequenza', (v) => `${v} MHz`], ampiezza: ['Ampiezza', (v) => `${v} MHz`], azimut: ['Azimut', (v) => `${v}°`] };
 
 interface Finding {
@@ -550,7 +550,7 @@ export function Advisor() {
     <div className="ui-page ia-page">
       <PageHeader
         icon="troubleshoot"
-        title="IA-AP"
+        title="Assistente rete"
         subtitle="Problemi di AP e CPE trovati ogni ora da UISP (stazioni, statistiche della settimana, spettro di AP e CPE) e dal modello di copertura, con cosa fare."
         actions={
           <AsyncButton icon="refresh" onClick={refresh} onError={fail}>

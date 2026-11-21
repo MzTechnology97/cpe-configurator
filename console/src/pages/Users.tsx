@@ -550,7 +550,7 @@ function RoleHint({ role }: { role: string }) {
   if (role === 'specialist') {
     return (
       <p className="ui-muted ui-small us-p">
-        Specialist: lavora in autonomia per altre aziende, anche esterno a CDA Net. Ha la sua sezione (template suoi, connettori UISP delle aziende, storico a parte), gli strumenti tecnici e il flusso Specialist nell’app: niente magazzino, collaudo facoltativo, nessuna approvazione del NOC. Vede solo il proprio lavoro e quello dei suoi gruppi di lavoro (template, storico, calendario); clienti, rete e lavoro di CDA Net, comprese le installazioni CDA Net con le chiavi Wi-Fi e la password delle CPE, solo con la visibilità piena. Account, connettori, impostazioni, privacy, Claude, accessi bloccati e decisioni sul lavoro CDA Net restano agli admin.
+        Specialist: lavora in autonomia per altre aziende, anche esterno a CDA Net. Ha la sua sezione (template suoi, connettori UISP delle aziende, storico a parte), gli strumenti tecnici e il flusso Specialist nell’app: niente magazzino, collaudo facoltativo, nessuna approvazione del NOC. Vede solo il proprio lavoro e quello dei suoi gruppi di lavoro (template, storico, calendario); clienti, rete e lavoro di CDA Net, comprese le installazioni CDA Net con le chiavi Wi-Fi e la password delle CPE, solo con la visibilità piena. Account, connettori, impostazioni, privacy, connettore MCP, accessi bloccati e decisioni sul lavoro CDA Net restano agli admin.
       </p>
     );
   }

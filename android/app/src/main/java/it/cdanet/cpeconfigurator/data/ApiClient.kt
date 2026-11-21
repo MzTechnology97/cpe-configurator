@@ -403,7 +403,7 @@ class ApiClient(
     /** «Albo e permessi» (admins): reads every list now. */
     suspend fun alboCheck(): AlboStatusDto = AppJson.decodeFromString(AlboStatusDto.serializer(), request("POST", "/api/admin/albo/check", buildJsonObject {}))
 
-    /** «Assistente AI» (admins): the permission requests of the AIs on the PCs. */
+    /** «Approvazioni dei PC» (admins): the permission requests of the AIs on the PCs. */
     suspend fun aiRequests(state: String = "pending"): AiRequestsDto =
         AppJson.decodeFromString(AiRequestsDto.serializer(), request("GET", "/api/admin/ai/requests?state=$state"))
 
@@ -425,7 +425,7 @@ class ApiClient(
             ),
         )
 
-    /** IA-AP (admins): findings on APs and CPEs. */
+    /** Assistente rete (admins): findings on APs and CPEs. */
     suspend fun advisor(): AdvisorDto = AppJson.decodeFromString(AdvisorDto.serializer(), request("GET", "/api/admin/advisor"))
 
     /** Hides a finding for [days] (0 = shows it again). */
@@ -433,7 +433,7 @@ class ApiClient(
         request("POST", "/api/admin/advisor/dismiss", buildJsonObject { put("id", id); put("days", days) })
     }
 
-    /** IA-AP automatic optimisation: state and runs. */
+    /** Assistente rete automatic optimisation: state and runs. */
     suspend fun optimizer(): OptimizerDto = AppJson.decodeFromString(OptimizerDto.serializer(), request("GET", "/api/admin/advisor/optimizer"))
 
     /** Starts the optimisation of the AP of a finding, confirmed by the admin ([when]: now / night). */

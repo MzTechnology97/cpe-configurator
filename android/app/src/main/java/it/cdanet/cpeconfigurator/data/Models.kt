@@ -1188,7 +1188,7 @@ data class PrivacyDto(
 @Serializable
 data class PositionCheckDto(val ok: Boolean = true, val checked: Boolean = false, val distanceM: Int? = null, val maxM: Int = 500, val reference: String? = null)
 
-/** IA-AP (admins): what to fix on APs and CPEs, from UISP and the coverage model. */
+/** Assistente rete (admins): what to fix on APs and CPEs, from UISP and the coverage model. */
 @Serializable
 data class AdvisorDto(
     val at: String? = null,
@@ -1219,7 +1219,7 @@ data class AdvisorFindingDto(
 @Serializable
 data class AdvisorCpeDto(val id: String? = null, val name: String = "", val mac: String? = null)
 
-/** IA-AP automatic optimisation: state and the last runs (newest first). */
+/** Assistente rete automatic optimisation: state and the last runs (newest first). */
 @Serializable
 data class OptimizerDto(val enabled: Boolean = false, val active: String? = null, val runs: List<OptimizerRunDto> = emptyList())
 
@@ -1265,7 +1265,7 @@ data class OptimizerRunDto(
     val error: String? = null,
 )
 
-/** «Assistente AI»: a permission request of an AI on a PC (the command only for the agent's owner). */
+/** «Approvazioni dei PC»: a permission request of an assistant on a PC (the command only for the agent's owner). */
 @Serializable
 data class AiRequestDto(
     val id: Long,

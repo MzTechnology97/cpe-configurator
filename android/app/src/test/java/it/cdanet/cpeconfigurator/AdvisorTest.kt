@@ -21,8 +21,8 @@ class AdvisorTest {
 
     @Test
     fun onlyAdminsSeeIaAp() {
-        assertTrue("IA-AP" in networkTabTitles(emptyMap(), admin = true))
-        assertFalse("IA-AP" in networkTabTitles(emptyMap(), admin = false))
+        assertTrue("Assistente rete" in networkTabTitles(emptyMap(), admin = true))
+        assertFalse("Assistente rete" in networkTabTitles(emptyMap(), admin = false))
         assertTrue(shortcutCatalog(emptyMap(), admin = true, offline = false).any { it.id == "ia_ap" })
         assertFalse(shortcutCatalog(emptyMap(), admin = false, offline = false).any { it.id == "ia_ap" })
     }

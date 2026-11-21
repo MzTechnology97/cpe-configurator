@@ -4,7 +4,7 @@ import { HttpError } from '../auth.ts';
 import type { AppContext } from '../context.ts';
 import { recordEvent } from '../db.ts';
 
-/** «Conoscenza AI» (module ai_memory): who sees everything reads, the admins refresh. */
+/** «Memorie di lavoro» (module ai_memory): who sees everything reads, the admins refresh. */
 export function aiMemoryRoutes(app: FastifyInstance, ctx: AppContext) {
   const on = ctx.modules.require('ai_memory');
   const reader = { preHandler: [ctx.auth.requireSeesAll, on] };

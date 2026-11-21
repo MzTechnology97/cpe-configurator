@@ -61,9 +61,9 @@ fun aiDecisionError(message: String?): String = when {
 }
 
 /**
- * «Assistente AI» (Rete → Assistente AI, admins, module ai_assistant): the AIs on the PCs ask for
+ * «Approvazioni dei PC» (Rete → Approvazioni dei PC, admins, module ai_assistant): the AIs on the PCs ask for
  * permission; deny with a tap, allow with a strong fingerprint/face (the phone's key) or a fresh
- * code. The command is written by an AI: shown as plain monospaced text, in full, never as a link.
+ * code. The command is written by an assistant: shown as plain monospaced text, in full, never as a link.
  */
 @Composable
 fun AiAssistantScreen(c: AppContainer) {
@@ -122,7 +122,7 @@ fun AiAssistantScreen(c: AppContainer) {
         ErrorBanner(error) { error = null }
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
-                Text("Richieste di permesso delle AI", fontWeight = FontWeight.SemiBold)
+                Text("Richieste di permesso degli assistenti", fontWeight = FontWeight.SemiBold)
                 Text(
                     if (mode == AiAllowMode.Biometric) "Nega con un tocco, consenti con impronta o volto" else "Nega con un tocco, consenti con un codice di verifica nuovo",
                     style = MaterialTheme.typography.bodySmall,
@@ -156,7 +156,7 @@ fun AiAssistantScreen(c: AppContainer) {
                     Text("Il testo del comando lo vede e decide solo ${r.owner}.", style = MaterialTheme.typography.bodySmall)
                     return@SectionCard
                 }
-                Text("Testo generato dall’AI, ripulito dei segreti: leggilo tutto prima di decidere.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text("Testo generato dall’assistente, ripulito dei segreti: leggilo tutto prima di decidere.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Text(r.detail.ifBlank { "(nessun dettaglio)" }, fontFamily = FontFamily.Monospace, style = MaterialTheme.typography.bodySmall)
                 val busyHere = deciding[r.id] == true
                 if (r.localOnly) {

@@ -88,7 +88,7 @@ const MESSAGES: Record<string, string> = {
   totp_required: 'Serve la verifica in due passaggi attiva sul tuo account',
   invalid_service_token: 'Nome del server (2-60 caratteri) e codice di verifica richiesti',
   too_many_service_tokens: 'Già 10 token di servizio attivi: revocane uno prima di crearne un altro',
-  too_many_agents: 'Già 5 agenti Assistente AI attivi: revocane uno prima di crearne un altro',
+  too_many_agents: 'Già 5 PC collegati alle Approvazioni dei PC: revocane uno prima di collegarne un altro',
   agent_not_found: 'Agente non trovato o già revocato',
   request_not_found: 'Richiesta non trovata',
   not_agent_owner: 'Decide l’amministratore che possiede l’agente',

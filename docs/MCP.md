@@ -1,10 +1,10 @@
-# Connetti il tuo Claude (MCP)
+# Connettore MCP
 
-Gli account admin possono collegare il proprio Claude alla piattaforma. Di serie Claude legge soltanto: stato della rete, interruzioni, batterie dei POP, salute della piattaforma, avvisi del NOC, interventi, magazzino, statistiche, copertura e la diagnosi di un cliente. Con un consenso esplicito («Consenti anche le modifiche», vedi sotto) può anche fare alcune modifiche, sempre dopo una conferma dell'utente e una CPE alla volta. La pagina della console è Amministrazione → **Connetti il tuo Claude**, con gli strumenti divisi tra lettura e scrittura e le connessioni attive.
+Gli account admin possono collegare alla piattaforma un assistente compatibile MCP. Di serie l'assistente legge soltanto: stato della rete, interruzioni, batterie dei POP, salute della piattaforma, avvisi del NOC, interventi, magazzino, statistiche, copertura e la diagnosi di un cliente. Con un consenso esplicito («Consenti anche le modifiche», vedi sotto) può anche fare alcune modifiche, sempre dopo una conferma dell'utente e una CPE alla volta. La pagina della console è Amministrazione → **Connettore MCP**, con gli strumenti divisi tra lettura e scrittura e le connessioni attive.
 
 ## Cosa legge
 
-In sola lettura Claude ha a disposizione tutti i moduli:
+In sola lettura l'assistente ha a disposizione tutti i moduli:
 - **rete:** stato della rete, salute della piattaforma, gestione rete, infrastruttura, salute e andamento delle CPE, consigli e proposte dell'ottimizzatore;
 - **corrente:** interruzioni e mappa dei guasti, batterie dei POP;
 - **copertura:**
@@ -38,7 +38,7 @@ Gli strumenti di scrittura:
   - modifica nome, note e manutenzione;
   - autorizza in UISP la CPE di un'installazione.
 
-Restano fuori da Claude, per sicurezza:
+Restano fuori dal connettore, per sicurezza:
 - sblocco degli accessi bloccati;
 - revoca delle connessioni;
 - account e ruoli;
@@ -49,20 +49,20 @@ Restano fuori da Claude, per sicurezza:
 - nuovo subscriber nel CRM;
 - password PPPoE e chiavi Wi-Fi.
 
-Un Claude compromesso non può darsi altri permessi né togliere i blocchi.
+Un assistente compromesso non può darsi altri permessi né togliere i blocchi.
 
 Regole per le scritture:
-- Claude chiede conferma all'utente prima di ogni modifica. Gli strumenti sono segnati come modifiche, e quelli sulla rete o di eliminazione come distruttivi.
+- L'assistente chiede conferma all'utente prima di ogni modifica. Gli strumenti sono segnati come modifiche, e quelli sulla rete o di eliminazione come distruttivi.
 - **Rete una CPE alla volta**: al massimo 5 azioni sulla rete all'ora per connessione; le altre si fanno dalla console.
-- **Prompt injection.** Quello che restituiscono gli strumenti esce dentro `dati`, con l'avviso che il testo scritto dagli utenti è un dato e non un'istruzione: note, nomi, motivi dei KO, hostname delle CPE. Anche le istruzioni del server lo dicono a Claude.
-- Ogni modifica finisce nel Registro come «modifica via Claude», con l'esito. Ogni modifica, non solo quelle sulla rete, manda anche un avviso al NOC su Telegram: chi, cosa, su cosa, se è riuscita.
+- **Prompt injection.** Quello che restituiscono gli strumenti esce dentro `dati`, con l'avviso che il testo scritto dagli utenti è un dato e non un'istruzione: note, nomi, motivi dei KO, hostname delle CPE. Anche le istruzioni del server lo dicono all'assistente.
+- Ogni modifica finisce nel Registro come «modifica via connettore MCP», con l'esito. Ogni modifica, non solo quelle sulla rete, manda anche un avviso al NOC su Telegram: chi, cosa, su cosa, se è riuscita.
 
 Una connessione in sola lettura che prova una modifica riceve l'invito a ricollegarsi con le modifiche.
 
 ## Sicurezza
 
 - Solo account **admin** con la **verifica in due passaggi** attiva. Il consenso si dà con utente, password e codice.
-- OAuth 2.1 con PKCE (S256). Si torna solo alle app di Claude (`https://claude.ai`, `https://claude.com`) oppure a questo computer (`http://localhost`, `127.0.0.1`): un altro sito non può ricevere un consenso dato sulla nostra pagina. Il nome del client lo decide il server, e la pagina di consenso mostra in evidenza dove si tornerà.
+- OAuth 2.1 con PKCE (S256). Si torna solo ai domini delle app MCP supportate (`https`, porta 443) oppure a questo computer (`http://localhost`, `127.0.0.1`): un altro sito non può ricevere un consenso dato sulla nostra pagina. Il nome del client lo decide il server, e la pagina di consenso mostra in evidenza dove si tornerà.
 - Token di accesso di un'ora; token di rinnovo di 30 giorni, che ruotano a ogni uso. Si salvano solo come impronta (SHA-256). Un token di rinnovo già usato che ricompare chiude la connessione.
 - La connessione si chiude subito se l'admin viene disattivato, perde il ruolo, cambia password o toglie la verifica in due passaggi. Si revoca anche dalla console.
 - Le risposte escono ripulite:
@@ -72,13 +72,13 @@ Una connessione in sola lettura che prova una modifica riceve l'invito a ricolle
 - Ogni richiesta finisce nel Registro con il nome dello strumento, non con i dati.
 - Massimo 120 richieste al minuto per connessione. La registrazione dei client è limitata e i client mai usati si cancellano dopo un giorno.
 
-Nota GDPR: quello che Claude legge passa da Anthropic. Per i dati dei clienti serve un accordo sul trattamento dei dati (DPA) con Anthropic.
+Nota GDPR: quello che l'assistente legge passa dal suo fornitore. Per i dati dei clienti serve un accordo sul trattamento dei dati (DPA) con quel fornitore.
 
 ## Token di servizio (server interni)
 
 Serve a un server nostro che deve leggere gli stessi strumenti senza un browser per il consenso, per esempio il **CRM interno**.
 
-- **Chi lo crea:** un admin con la verifica in due passaggi, da Amministrazione → **Connetti il tuo Claude** → «Token di servizio (server interni)».
+- **Chi lo crea:** un admin con la verifica in due passaggi, da Amministrazione → **Connettore MCP** → «Token di servizio (server interni)».
   - Scrive il nome del server e un **codice di verifica nuovo** (o un codice di recupero), poi preme «Crea token di servizio».
   - Il token (`cdasvc_…`) si vede **una volta sola**. Va salvato subito nel `.env` del server che lo usa, mai in chat o in un repository.
 - **Cosa può fare:** **sempre sola lettura**. Vede gli strumenti di lettura, gli stessi elencati sopra, e mai quelli di scrittura.
@@ -106,14 +106,14 @@ Il server chiama `POST https://<server>/mcp` con `Authorization: Bearer cdasvc_�
 
 ## Collegarsi
 
-L'indirizzo del connettore è `https://<server>/mcp`. Il login apre la pagina «Connetti il tuo Claude» della piattaforma.
+L'indirizzo del connettore è `https://<server>/mcp`. Il login apre la pagina «Connettore MCP» della piattaforma.
 
-### A · Claude Desktop sul PC, server non esposto su Internet
+### A · App desktop sul PC, server non esposto su Internet
 
 Il PC deve raggiungere il server (ufficio o VPN). Serve Node.js sul PC.
 
 1. Scarica il certificato della piattaforma: sul server `sudo cdanet-cpe https-ca`, salvato per esempio in `C:\cdanet\cdanet-ca.crt`.
-2. In Claude Desktop → Impostazioni → Sviluppatore → «Modifica configurazione», aggiungi:
+2. Nella configurazione dei server MCP dell'app desktop dell'assistente aggiungi:
 
    ```json
    {
@@ -127,9 +127,9 @@ Il PC deve raggiungere il server (ufficio o VPN). Serve Node.js sul PC.
    }
    ```
 
-3. Riavvia Claude Desktop. Al primo uso si apre il browser con la pagina di consenso: utente, password, codice, «Consenti».
+3. Riavvia l'app. Al primo uso si apre il browser con la pagina di consenso: utente, password, codice, «Consenti».
 
-`mcp-remote` è un pacchetto open source di terze parti che fa da ponte tra Claude Desktop e un server MCP remoto. Funziona solo sul PC, non nell'app del telefono.
+`mcp-remote` è un pacchetto open source di terze parti che fa da ponte tra un'app desktop e un server MCP remoto. Funziona solo sul PC, non nell'app del telefono.
 
 ### B · Anche dal telefono, senza aprire porte
 
@@ -137,7 +137,7 @@ Un tunnel (per esempio Cloudflare Tunnel con un dominio dell'azienda) pubblica c
 
 ### C · Server con dominio e certificato
 
-In Claude (Desktop o web) → Impostazioni → Connettori → «Aggiungi connettore personalizzato» → `https://<dominio>/mcp`. Il connettore resta legato all'account Claude e si trova anche nell'app del telefono. Serve un piano Claude a pagamento.
+Nelle impostazioni dell'assistente (desktop o web) aggiungi un connettore personalizzato con l'indirizzo `https://<dominio>/mcp`. Il connettore resta legato al tuo account e si trova anche nell'app del telefono.
 
 ## Per la console
 

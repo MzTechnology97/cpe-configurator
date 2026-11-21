@@ -7,7 +7,7 @@ on:
     paths: ['server/**', 'web/**', 'console/**', 'deploy/**', 'VERSION', 'scripts/**', '.github/workflows/server.yml']
   pull_request:
     # tools/ too: the checks are required to merge, a PR touching only tools/ would wait forever
-    paths: ['server/**', 'web/**', 'console/**', 'deploy/**', 'VERSION', 'scripts/**', 'tools/**', '.github/workflows/server.yml']
+    paths: ['server/**', 'web/**', 'console/**', 'deploy/**', 'VERSION', 'scripts/**', 'tools/**', '.github/workflows/server.yml', 'docs/**', 'android/**', '*.md']
   workflow_dispatch:
 
 permissions:
@@ -52,6 +52,8 @@ jobs:
           if git grep -nE 'BEGIN (RSA|OPENSSH|EC) PRIVATE KEY|ghp_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{20,}'; then
             echo "Possible secret committed"; exit 1
           fi
+      - name: Regola dei nomi (0 trovati)
+        run: node scripts/controlla-parole.mjs
 
   image:
     needs: test

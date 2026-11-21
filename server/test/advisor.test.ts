@@ -37,7 +37,7 @@ const ap = (o: Partial<AdvisorInput> = {}): AdvisorInput => ({
 const range = { from: 5150, to: 5925 };
 const kinds = (f: Array<{ kind: string }>) => f.map((x) => x.kind).sort();
 
-describe('IA-AP: lettura dei dati e regole', () => {
+describe('Assistente rete: lettura dei dati e regole', () => {
   it('signal trend over the week, and the input of an AP from UISP', () => {
     const start = Date.UTC(2026, 9, 1);
     const s = Array.from({ length: 168 }, (_, i) => ({ x: start + i * 3_600_000, y: i < 48 ? -55 : i >= 144 ? -63 : -58 }));
@@ -200,7 +200,7 @@ describe('IA-AP: lettura dei dati e regole', () => {
   });
 });
 
-describe('IA-AP: notifiche', () => {
+describe('Assistente rete: notifiche', () => {
   it('a critical finding is told once a week, also when it comes and goes; the first run is the starting point', async () => {
     const { DatabaseSync } = await import('node:sqlite');
     const { createAdvisor } = await import('../src/services/ap-advisor.ts');
@@ -219,7 +219,7 @@ describe('IA-AP: notifiche', () => {
     const other = [ap({ stations: [station({ deviceId: 'weak', rxSignal: -82, noise: -92 }), station({ deviceId: 'new', trendDb: -11 }), station({ deviceId: 'a' }), station({ deviceId: 'b' }), station({ deviceId: 'c' })] })];
     await advisor.run(other); // a really new critical finding
     assert.equal(sent.length, 1);
-    assert.match(sent[0]!.title, /^🛠️ IA-AP: 1 nuovo problema critico/);
+    assert.match(sent[0]!.title, /^🛠️ Assistente rete: 1 nuovo problema critico/);
     assert.match(sent[0]!.lines[0]!, /calo/);
     const s = advisor.summary();
     assert.equal(s.critico, 2);

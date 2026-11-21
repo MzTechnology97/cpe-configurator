@@ -105,7 +105,7 @@ export function Dashboard() {
         <Stat label="provisioning nelle ultime 24 ore" value={t.jobs24h} onClick={go('#/jobs')} />
         {net && <Stat label="AP non raggiungibili" value={net.down} tone={net.down ? 'bad' : 'good'} onClick={go('#/network')} />}
         {net && net.powerOutage > 0 && <Stat label="AP con guasto Enel vicino" value={net.powerOutage} tone="warn" onClick={go('#/outages')} />}
-        {ia?.at && <Stat label="problemi critici IA-AP" hint={ia.apsCritical ? `su ${ia.apsCritical} AP` : undefined} value={ia.critico} tone={ia.critico ? 'bad' : 'good'} onClick={go('#/ia-ap')} />}
+        {ia?.at && <Stat label="problemi critici dell’Assistente rete" hint={ia.apsCritical ? `su ${ia.apsCritical} AP` : undefined} value={ia.critico} tone={ia.critico ? 'bad' : 'good'} onClick={go('#/ia-ap')} />}
         {ia && ia.optimizations.length > 0 && (
           <Stat
             label={running ? `ottimizzazione in corso su ${running.apName}` : ia.optimizations.length === 1 ? 'ottimizzazione programmata' : 'ottimizzazioni programmate'}
