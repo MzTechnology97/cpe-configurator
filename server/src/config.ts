@@ -143,7 +143,7 @@ const envSchema = z.object({
   OPENCELLID_BBOX: z.string().max(80).default('36.5,12.0,38.4,15.8'),
   /** «Memorie di lavoro» (modulo ai_memory): token GitHub fine-grained in SOLA LETTURA (Contents: read) su un solo repository privato. */
   AI_HUB_TOKEN: optionalText(300),
-  AI_HUB_REPO: z.string().regex(/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/).default('cdanet-as200034/cdanet-as200034-continuity-hardened'),
+  AI_HUB_REPO: z.string().regex(/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/).default('CDA-System-S-R-L/cdanet-as200034-continuity-hardened'),
   AI_HUB_REF: z.string().regex(/^[A-Za-z0-9_./-]{1,100}$/).default('main'),
   AI_HUB_API: z.string().url().default('https://api.github.com'),
 

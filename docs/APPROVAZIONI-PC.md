@@ -64,7 +64,7 @@ Continuity ←127.0.0.1→ agente ──HTTPS, in uscita──▶  /api/ai-agent
 
 ## Memorie di lavoro
 
-Modulo a parte (**Memorie di lavoro**, spento di default). Le memorie di lavoro condivise dagli assistenti (profilo, decisioni, schede dei progetti, playbook per dominio) si scrivono e si rivedono in Git, nel repository privato `cdanet-as200034/cdanet-as200034-continuity-hardened`, cartelle `cdanet/hub/memorie/` e `cdanet/hub/playbook/`. Il server le legge ogni ora e ne tiene una copia: in console (**Memorie di lavoro**, per chi ha visibilità piena) e per gli assistenti collegati con lo strumento MCP `memorie_cdanet`.
+Modulo a parte (**Memorie di lavoro**, spento di default). Le memorie di lavoro condivise dagli assistenti (profilo, decisioni, schede dei progetti, playbook per dominio) si scrivono e si rivedono in Git, nel repository privato `CDA-System-S-R-L/cdanet-as200034-continuity-hardened`, cartelle `cdanet/hub/memorie/` e `cdanet/hub/playbook/`. Il server le legge ogni ora e ne tiene una copia: in console (**Memorie di lavoro**, per chi ha visibilità piena) e per gli assistenti collegati con lo strumento MCP `memorie_cdanet`.
 
 Regole:
 - solo file `.md` in quelle due cartelle, al massimo 100 file da 64 KB;
@@ -75,7 +75,7 @@ Regole:
 ### Il token (una volta, poi ogni anno)
 
 1. GitHub → **Settings → Developer settings → Personal access tokens → Fine-grained tokens → Generate new token**.
-2. **Resource owner**: `cdanet-as200034`. **Repository access**: *Only select repositories* → solo `cdanet-as200034-continuity-hardened`.
+2. **Resource owner**: l'organizzazione `CDA-System-S-R-L` (dal 27/11 il repository sta lì; il token del vecchio proprietario non vale più). **Repository access**: *Only select repositories* → solo `cdanet-as200034-continuity-hardened`.
 3. **Permissions → Repository permissions → Contents: Read-only** (Metadata: Read-only si aggiunge da sola). Nient'altro.
 4. Scadenza: al massimo un anno, con un promemoria in agenda.
 5. Console → **Amministrazione → Funzionalità** → accendi **Memorie di lavoro**.
