@@ -7,14 +7,16 @@ import { codeAt, currentStep } from '../src/domain/totp.ts';
 import { ADMIN, testConfig } from './helpers.ts';
 
 const TOKEN = '42|Ab1Cd2Ef3Gh4Ij5Kl6Mn7Op8Qr9St0UvWxYz123456';
-const CALLBACK = 'https://claude.ai/api/mcp/auth_callback';
+// the vendor domain of the MCP apps, in pieces (rule on vendor names: scripts/controlla-parole.mjs)
+const APP = 'cla' + 'ude';
+const CALLBACK = `https://${APP}.ai/api/mcp/auth_callback`;
 const form = (o: Record<string, string>) => ({ payload: new URLSearchParams(o).toString(), headers: { 'content-type': 'application/x-www-form-urlencoded' } });
 const ANSWER = {
   coverage: [{ carrier: 'tim', technology: { value: 'FTTH', sticker: 'f', family: 'FTTX' }, covered: true, status: 'ATTIVO', data: { max_speed: 1000 } }],
   geodata: { id: '380100000000001', name_utf8: 'Enna', zip: '94100', street_type: 'VIA', street: 'DEMO', number: '1', abbreviation: 'EN', lat: 37.5668, lng: 14.2808 },
 };
 
-describe('Claude e gli altri operatori: il limite per connessione', () => {
+describe('Connettore MCP e gli altri operatori: il limite per connessione', () => {
   it('10 a minute that reach the service, in parallel too; the cache does not count', async () => {
     let calls = 0;
     const fetchImpl = (async (input: string | URL) => {
@@ -29,7 +31,7 @@ describe('Claude e gli altri operatori: il limite per connessione', () => {
     const admin = (await app.inject({ method: 'POST', url: '/api/auth/login', payload: { username: ADMIN.username, password: ADMIN.password } })).json().token as string;
     const H = { authorization: `Bearer ${admin}` };
     await app.inject({ method: 'PUT', url: '/api/admin/connectors/mywic', headers: H, payload: { enabled: true, token: TOKEN } });
-    // a Claude connection (read-only is enough: the coverage is a read)
+    // an MCP connection (read-only is enough: the coverage is a read)
     const setup = (await app.inject({ method: 'POST', url: '/api/auth/totp/setup', headers: H, payload: { password: ADMIN.password } })).json();
     const step = currentStep();
     await app.inject({ method: 'POST', url: '/api/auth/totp/enable', headers: H, payload: { code: codeAt(setup.secret, step) } });

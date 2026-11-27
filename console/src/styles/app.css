@@ -365,7 +365,7 @@ th:last-child { border-top-right-radius: 10px; }
 tr:hover > td { background: color-mix(in srgb, var(--brand) 4%, transparent); }
 .notice { border-radius: 12px; }
 
-/* IA-AP */
+/* Assistente rete */
 .advice { display: grid; gap: 4px; padding: 10px 0; border-top: 1px solid var(--line); }
 .advice:first-of-type { border-top: 0; }
 .advice.muted { opacity: .6; }
@@ -395,7 +395,7 @@ tr:hover > td { background: color-mix(in srgb, var(--brand) 4%, transparent); }
 .link-antenna { fill: #f97316; stroke: #fff; stroke-width: 2; }
 .link-label { font-size: 13px; font-weight: 700; fill: var(--ink); }
 .link-critical { stroke: #dc2626; stroke-width: 1.5; stroke-dasharray: 3 3; }
-/* IA-AP: counters, toolbar, two panes (list | detail) on wide screens */
+/* Assistente rete: counters, toolbar, two panes (list | detail) on wide screens */
 .ia-meta { margin: -8px 0 14px; }
 .ia-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 16px; }
 .ia-kpi { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; padding: 14px 16px; border: 1px solid var(--line); border-left-width: 4px; border-radius: 12px; background: var(--surface); color: var(--ink); text-align: left; cursor: pointer; font: inherit; }

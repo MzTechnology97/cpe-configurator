@@ -28,7 +28,7 @@ La visibilità scende dall'alto verso il basso, mai al contrario.
 
 | Livello | Chi | Cosa vede e cosa fa |
 |---|---|---|
-| 1 | **Amministratori** | Tutta la piattaforma. Creano gli account e danno la visibilità piena. Gestiscono connettori, impostazioni, backup e Claude. |
+| 1 | **Amministratori** | Tutta la piattaforma. Creano gli account e danno la visibilità piena. Gestiscono connettori, impostazioni, backup e connettore MCP. |
 | 2 | **Direttore tecnico** (Specialist con visibilità piena) | I dati di CDA Net (clienti, rete, interventi, statistiche, Registro) come un admin, e le installazioni CDA Net come un installatore. Vede il lavoro di **tutti** gli Specialist e gestisce i gruppi di lavoro. **Non** gestisce account, connettori, impostazioni o backup. |
 | 3 | **Gruppi di lavoro** | I membri condividono template delle CPE, storico provisioning e calendario. |
 | 4 | **Specialist** | Il proprio lavoro, più quello dei membri dei suoi gruppi. Mai clienti, rete o lavoro di CDA Net, né le sue chiavi. |
@@ -75,7 +75,7 @@ Tutto quello che mostra dati di CDA Net o di altri richiede la visibilità piena
 - guasti Enel;
 - Victron;
 - magazzino;
-- IA-AP;
+- Assistente rete;
 - fattibilità;
 - salute piattaforma;
 - precisione della copertura;

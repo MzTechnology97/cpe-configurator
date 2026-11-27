@@ -5,8 +5,8 @@ import type { Db } from '../db.ts';
 import { nowIso, recordEvent } from '../db.ts';
 
 /**
- * Like fail2ban for the platform's own logins (password, second step, quick login, consent of a
- * Claude connection): every attempt is logged; 5 failed in 15 minutes from one IP or one device
+ * Like fail2ban for the platform's own logins (password, second step, quick login, consent of an
+ * MCP connection): every attempt is logged; 5 failed in 15 minutes from one IP or one device
  * ban it for 30 minutes (24 hours if it was banned already in the last day).
  *
  * - An IP ban stops logins and requests without a valid session only: many installers share one
@@ -37,9 +37,9 @@ export function deviceOf(req: FastifyRequest): string | null {
   return s && UUID.test(s) ? s.toLowerCase() : null;
 }
 
-/** Where the attempt came from: the app (its client header), Claude (OAuth), or a browser. */
+/** Where the attempt came from: the app (its client header), an MCP connection (OAuth), or a browser. */
 function channelOf(req: FastifyRequest): string {
-  if (req.url.startsWith('/oauth/')) return 'claude';
+  if (req.url.startsWith('/oauth/')) return 'mcp';
   return req.headers['x-cda-client'] ? 'app' : 'web';
 }
 

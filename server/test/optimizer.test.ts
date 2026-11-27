@@ -67,7 +67,7 @@ function setup(world: (c: number, w: number) => unknown[], o: { params?: Record<
 }
 const three = (cap: number) => [station(1, cap), station(2, cap), station(3, cap, -70)];
 
-describe('IA-AP ottimizzazione: configurazione e confronto', () => {
+describe('Assistente rete ottimizzazione: configurazione e confronto', () => {
   it('changes only the channel of the configuration, from the radio table', () => {
     const c = configWithChannel(apConfig(5500, 20), 5300, 40);
     assert.deepEqual([c.centerFrequency, c.controlFrequency, c.channelWidth, c.ieeeModeString], [5300, 5290, 40, '11acvht40']);
@@ -114,7 +114,7 @@ describe('IA-AP ottimizzazione: configurazione e confronto', () => {
   });
 });
 
-describe('IA-AP ottimizzazione: mai oltre 40 MHz (radio PtMP di CDA Net)', () => {
+describe('Assistente rete ottimizzazione: mai oltre 40 MHz (radio PtMP di CDA Net)', () => {
   it('the configuration refuses 80 MHz even when the radio lists it', () => {
     assert.throws(() => configWithChannel(apConfig(5500, 40), 5530, 80), /oltre il massimo delle nostre radio PtMP \(40 MHz\)/);
     assert.equal(configWithChannel(apConfig(5500, 20), 5510, 40).channelWidth, 40);
@@ -142,7 +142,7 @@ describe('IA-AP ottimizzazione: mai oltre 40 MHz (radio PtMP di CDA Net)', () =>
   });
 });
 
-describe('IA-AP ottimizzazione: prove sull’AP tramite UISP (simulato)', () => {
+describe('Assistente rete ottimizzazione: prove sull’AP tramite UISP (simulato)', () => {
   it('keeps a channel that is really better', async () => {
     const { opt, fake, sent, runOf } = setup((c) => three(c === 5300 ? 130 : 100));
     const run = opt.schedule({ findingId: 'channel:ap-1', mode: 'suggested', when: 'now', by: 'admin' });

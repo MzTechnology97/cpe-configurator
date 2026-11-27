@@ -292,7 +292,7 @@ export async function buildApp(
     log: (m) => pushLog(m),
   });
   ctx.ottMonitor.seed();
-  // «Assistente AI»: the notice goes to the owner of the agent only (Notifiche, push, personal
+  // «Approvazioni dei PC»: the notice goes to the owner of the agent only (Notifiche, push, personal
   // Telegram), with the tool's name and never the command; the consoles refresh on 'ai'.
   ctx.aiAssistant = createAiAssistant(db, {
     notice: (userId, title, lines) => ctx.notify.inbox.push([userId], { kind: 'ai_permission', title, lines }),
@@ -422,7 +422,7 @@ export async function buildApp(
     reply.header('X-Frame-Options', 'DENY');
     reply.header('Cross-Origin-Opener-Policy', 'same-origin');
     if (req.url.startsWith('/api/')) reply.header('Cache-Control', reply.getHeader('Cache-Control') ?? 'no-store');
-    // a page with its own policy keeps it (the Claude consent page: its inline style, the redirect as form target)
+    // a page with its own policy keeps it (the MCP consent page: its inline style, the redirect as form target)
     else if (!reply.getHeader('Content-Security-Policy')) reply.header('Content-Security-Policy', CSP);
     return payload;
   });

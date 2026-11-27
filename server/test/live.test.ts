@@ -40,7 +40,7 @@ describe('Aggiornamenti in tempo reale (/api/events)', () => {
       };
       const a = await open(admin);
       const i = await open(tec);
-      // wait for both subscriptions, then: a notification to the NOC, an IA-AP analysis, an outage
+      // wait for both subscriptions, then: a notification to the NOC, an Assistente rete analysis, an outage
       for (let n = 0; n < 50 && t.ctx.live.count() < 2; n++) await new Promise((ok) => setTimeout(ok, 20));
       assert.equal(t.ctx.live.count(), 2);
       t.ctx.notify.inbox.push('noc', { kind: 'install_ko', title: 'KO', lines: [] });
@@ -49,7 +49,7 @@ describe('Aggiornamenti in tempo reale (/api/events)', () => {
       t.ctx.notify.inbox.push([tecId], { kind: 'work_order_assigned', title: 'Intervento', lines: [] });
       const [ea, ei] = await Promise.all([readEvents(a, 1500), readEvents(i, 1500)]);
       assert.deepEqual(ea, ['ready', 'notifications', 'advisor', 'outages']);
-      assert.deepEqual(ei, ['ready', 'outages', 'notifications'], 'the installer: no NOC notification, no IA-AP');
+      assert.deepEqual(ei, ['ready', 'outages', 'notifications'], 'the installer: no NOC notification, no Assistente rete');
       // a closed stream leaves the list
       for (let n = 0; n < 50 && t.ctx.live.count() > 0; n++) await new Promise((ok) => setTimeout(ok, 20));
       assert.equal(t.ctx.live.count(), 0);

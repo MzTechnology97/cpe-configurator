@@ -1,5 +1,5 @@
 /**
- * «Assistente AI»: the text of a permission request is written by an AI on a PC and may carry a
+ * «Approvazioni dei PC»: the text of a permission request is written by an assistant on a PC and may carry a
  * secret it read (a key in a command line, a URL with a password). The agent on the PC already
  * cleans it; the server cleans it again before storing or showing it, and cuts it short.
  */

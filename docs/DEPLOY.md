@@ -125,7 +125,7 @@ Console → **Amministrazione → Impostazioni server** (solo admin): i parametr
 - **Soglie di collaudo e salute CPE**: segnale buono e minimo, CINR, catene, capacità, porta LAN, calo rispetto al collaudo, CPE offline da nascondere;
 - **Collaudo: speedtest e Wi-Fi**: server di speedtest Ookla (host:porta), durata, connessioni, velocità minima rispetto al profilo, soglie del Wi-Fi del telefono;
 - **Copertura per gli installatori**, **Simulazione radio** e **Copertura altri operatori** (vedi [COPERTURA.md](COPERTURA.md));
-- **Assistente rete** (IA-AP, ottimizzazione automatica) e **Avvisi proattivi** (vedi [NOC.md](NOC.md));
+- **Assistente rete** (ottimizzazione automatica) e **Avvisi proattivi** (vedi [NOC.md](NOC.md));
 - **Magazzino**: CPE minime per installatore;
 - **Rilasci dell'app Android**: repository/token GitHub e frequenza di controllo.
 

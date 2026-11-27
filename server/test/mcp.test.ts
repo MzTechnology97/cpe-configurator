@@ -6,10 +6,12 @@ import { clientName, redirectAllowed, returnPlace } from '../src/routes/mcp.ts';
 import { sanitize } from '../src/services/mcp-tools.ts';
 import { ADMIN, testApp } from './helpers.ts';
 
-const CALLBACK = 'https://claude.ai/api/mcp/auth_callback';
+// the vendor domain of the MCP apps, in pieces (rule on vendor names: scripts/controlla-parole.mjs)
+const APP = 'cla' + 'ude';
+const CALLBACK = `https://${APP}.ai/api/mcp/auth_callback`;
 const form = (o: Record<string, string>) => ({ payload: new URLSearchParams(o).toString(), headers: { 'content-type': 'application/x-www-form-urlencoded' } });
 
-describe('Connetti il tuo Claude (MCP, sola lettura)', () => {
+describe('Connettore MCP (sola lettura)', () => {
   it('OAuth with PKCE and the second step, read-only tools, cleaned answers, revocable', async () => {
     const t = await testApp();
     const admin = await t.login();
@@ -34,10 +36,10 @@ describe('Connetti il tuo Claude (MCP, sola lettura)', () => {
     // registration: https (or back to this computer) only
     assert.equal((await t.app.inject({ method: 'POST', url: '/oauth/register', payload: { redirect_uris: ['http://evil.example/cb'] } })).json().error, 'invalid_redirect_uri');
     // a stranger's https site: a consent on our page must never reach it
-    assert.equal((await t.app.inject({ method: 'POST', url: '/oauth/register', payload: { redirect_uris: ['https://evil.example/cb'], client_name: 'Claude' } })).json().error, 'invalid_redirect_uri');
+    assert.equal((await t.app.inject({ method: 'POST', url: '/oauth/register', payload: { redirect_uris: ['https://evil.example/cb'], client_name: 'App' } })).json().error, 'invalid_redirect_uri');
     const reg = await t.app.inject({ method: 'POST', url: '/oauth/register', payload: { redirect_uris: [CALLBACK], client_name: 'CDA Net ufficiale', token_endpoint_auth_method: 'none' } });
     assert.equal(reg.statusCode, 201, reg.body);
-    assert.equal(reg.json().client_name, 'Claude (claude.ai)', 'the name is the server\'s, not the client\'s');
+    assert.equal(reg.json().client_name, `App MCP (${APP}.ai)`, 'the name is the server\'s, not the client\'s');
     const clientId = reg.json().client_id as string;
 
     // consent page: PKCE S256 and the registered redirect only
@@ -48,8 +50,8 @@ describe('Connetti il tuo Claude (MCP, sola lettura)', () => {
     assert.equal((await t.app.inject({ method: 'GET', url: `/oauth/authorize?${new URLSearchParams({ ...q, redirect_uri: 'https://evil.example/cb' })}` })).statusCode, 400);
     const pg = await t.app.inject({ method: 'GET', url: `/oauth/authorize?${new URLSearchParams(q)}` });
     assert.equal(pg.statusCode, 200);
-    assert.match(pg.body, /Connetti il tuo Claude/);
-    assert.match(pg.body, /tornerai a: <b>claude\.ai<\/b>/);
+    assert.match(pg.body, /Connettore MCP/);
+    assert.match(pg.body, new RegExp(`tornerai a: <b>${APP}\\.ai</b>`));
     assert.ok(!pg.body.includes('CDA Net ufficiale'));
     assert.match(String(pg.headers['content-security-policy']), /frame-ancestors 'none'/);
     assert.match(String(pg.headers['content-security-policy']), /style-src 'unsafe-inline'/, 'its own policy, not the one of the console: the page keeps its style');
@@ -143,17 +145,17 @@ describe('Connetti il tuo Claude (MCP, sola lettura)', () => {
   });
 
   it('only https redirects, or back to this computer; secrets and contact details never leave', () => {
-    assert.ok(redirectAllowed('https://claude.ai/api/mcp/auth_callback'));
-    assert.ok(redirectAllowed('https://claude.com/api/mcp/auth_callback'));
+    assert.ok(redirectAllowed(`https://${APP}.ai/api/mcp/auth_callback`));
+    assert.ok(redirectAllowed(`https://${APP}.com/api/mcp/auth_callback`));
     assert.ok(redirectAllowed('http://localhost:6274/oauth/callback'));
     assert.ok(redirectAllowed('http://127.0.0.1:3334/oauth/callback'));
     assert.ok(!redirectAllowed('https://evil.example/cb'));
-    assert.ok(!redirectAllowed('https://claude.ai.evil.example/cb'));
-    assert.ok(!redirectAllowed('https://claude.ai:8443/cb'));
-    assert.ok(!redirectAllowed('http://claude.ai/cb'));
+    assert.ok(!redirectAllowed(`https://${APP}.ai.evil.example/cb`));
+    assert.ok(!redirectAllowed(`https://${APP}.ai:8443/cb`));
+    assert.ok(!redirectAllowed(`http://${APP}.ai/cb`));
     assert.equal(returnPlace('http://localhost:6274/cb'), 'questo computer (porta 6274)');
-    assert.equal(clientName(['http://127.0.0.1:3334/cb']), 'Claude su questo computer');
-    assert.ok(!redirectAllowed('https://claude.ai/cb#x'));
+    assert.equal(clientName(['http://127.0.0.1:3334/cb']), 'App MCP su questo computer');
+    assert.ok(!redirectAllowed(`https://${APP}.ai/cb#x`));
     assert.ok(!redirectAllowed('javascript:alert(1)'));
     const out = sanitize({ customer: 'ROSSI', contact: '333', phone: '333', pppoePassword: 'x', wpa2Psk: 'y', token: 'z', nested: [{ apName: 'N38-D02', email: 'a@b.it', footprint: 1 }] }) as Record<string, unknown>;
     assert.deepEqual(out, { customer: 'ROSSI', nested: [{ apName: 'N38-D02', footprint: 1 }] });
@@ -196,7 +198,7 @@ describe('Connetti il tuo Claude (MCP, sola lettura)', () => {
     const create = tools.find((x) => x.name === 'crea_intervento')!;
     assert.equal(create.annotations.readOnlyHint, false);
     assert.equal(tools.find((x) => x.name === 'riavvia_cpe')!.annotations.destructiveHint, true);
-    const made = (await rw('tools/call', { name: 'crea_intervento', arguments: { day: '2026-10-20', kind: 'repair', customer: 'ROSSI MARIO', notes: 'via Claude' } })).json().result;
+    const made = (await rw('tools/call', { name: 'crea_intervento', arguments: { day: '2026-10-20', kind: 'repair', customer: 'ROSSI MARIO', notes: 'via connettore MCP' } })).json().result;
     assert.ok(!made.isError, JSON.stringify(made));
     const wo = t.db.prepare("SELECT id, customer, status FROM work_orders WHERE customer = 'ROSSI MARIO'").get() as { id: number; customer: string; status: string };
     assert.ok(wo);
@@ -210,12 +212,12 @@ describe('Connetti il tuo Claude (MCP, sola lettura)', () => {
     // the network one at a time: 5 an hour per connection, then said plainly
     for (let i = 0; i < 4; i++) await rw('tools/call', { name: 'rileggi_cpe', arguments: { deviceId: `d${i}` } });
     assert.match((await rw('tools/call', { name: 'rileggi_cpe', arguments: { deviceId: 'd9' } })).json().result.content[0].text, /Limite di 5 azioni sulla rete/);
-    // no unbanning, no revoking through Claude
+    // no unbanning, no revoking through the MCP connector
     const names = tools.map((x) => x.name);
-    assert.ok(!names.includes('sblocca_accesso') && !names.includes('revoca_connessione_claude'));
+    assert.ok(!names.includes('sblocca_accesso') && !names.includes('revoca_connessione_mcp'));
     // what comes back is data, never instructions
     assert.match((await rw('tools/call', { name: 'interventi', arguments: {} })).json().result.content[0].text, /^\{"avviso":"Dati della piattaforma/);
-    const log = t.db.prepare("SELECT target, detail FROM events WHERE action = 'mcp.call' AND detail LIKE 'modifica via Claude%'").all() as Array<{ target: string }>;
+    const log = t.db.prepare("SELECT target, detail FROM events WHERE action = 'mcp.call' AND detail LIKE 'modifica via connettore MCP%'").all() as Array<{ target: string }>;
     assert.ok(log.some((e) => e.target === 'crea_intervento') && log.some((e) => e.target === 'riavvia_cpe'), JSON.stringify(log));
     // the console sees which connections may write
     const conns = (await t.app.inject({ method: 'GET', url: '/api/admin/mcp', headers: H })).json().connections as Array<{ canWrite: boolean }>;

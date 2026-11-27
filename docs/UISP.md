@@ -1,6 +1,6 @@
 # Integrazione UISP
 
-UISP è la fonte di AP, POP (site), CPE dei clienti, segnali e backup. Il server lo legge per Copertura, Stato rete, Salute CPE, Guasti Enel e IA-AP. Ci scrive solo su azione di un amministratore: accettazione delle CPE, backup, Gestione CPE e ottimizzazione dei canali di IA-AP.
+UISP è la fonte di AP, POP (site), CPE dei clienti, segnali e backup. Il server lo legge per Copertura, Stato rete, Salute CPE, Guasti Enel e Assistente rete. Ci scrive solo su azione di un amministratore: accettazione delle CPE, backup, Gestione CPE e ottimizzazione dei canali di Assistente rete.
 
 ## Configurazione
 

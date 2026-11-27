@@ -1,6 +1,6 @@
 # Accessi bloccati (come fail2ban) e CrowdSec
 
-La piattaforma registra ogni tentativo di accesso: dalla console web, dall'app e dal connettore Claude. Ogni tentativo vale, sia con la password, sia con il codice della verifica in due passaggi, sia con l'accesso rapido del telefono, sia con il consenso di Claude. Dopo **5 tentativi falliti in 15 minuti** blocca l'IP e il dispositivo da cui arrivano.
+La piattaforma registra ogni tentativo di accesso: dalla console web, dall'app e dal connettore MCP. Ogni tentativo vale, sia con la password, sia con il codice della verifica in due passaggi, sia con l'accesso rapido del telefono, sia con il consenso del connettore MCP. Dopo **5 tentativi falliti in 15 minuti** blocca l'IP e il dispositivo da cui arrivano.
 
 ## Regole
 
@@ -16,7 +16,7 @@ La piattaforma registra ogni tentativo di accesso: dalla console web, dall'app e
 - L'IP considerato è quello vero del client. `X-Forwarded-For` vale solo se arriva dal proxy della piattaforma (Caddy, `TRUST_PROXY`), e Caddy sovrascrive quello che manda un client esterno.
 - Durante il blocco, la risposta è `429 {"error":"banned","until":"…"}` con `Retry-After`.
 - Ogni blocco manda un avviso di sicurezza al NOC (Telegram) e finisce nel Registro: `auth.ban`, `auth.unban`.
-- Il registro dei tentativi si tiene 90 giorni. Contiene ora, IP, dispositivo, utente tentato, canale (web, app, claude), tipo ed esito, **mai la password**.
+- Il registro dei tentativi si tiene 90 giorni. Contiene ora, IP, dispositivo, utente tentato, canale (web, app, mcp), tipo ed esito, **mai la password**.
 
 ## Console
 

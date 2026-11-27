@@ -93,7 +93,7 @@ fun optimizerOutcome(r: OptimizerRunDto): Pair<String, NoticeKind> = when (r.out
 
 private fun ch(c: ChannelDto?) = if (c == null) "—" else "${c.centre}/${c.width} MHz"
 
-private const val OPTIMIZE_TEXT = "L'IA-AP cambierà il canale dell'AP tramite UISP. A ogni prova le CPE si sganciano per circa un minuto; " +
+private const val OPTIMIZE_TEXT = "L'Assistente rete cambierà il canale dell'AP tramite UISP. A ogni prova le CPE si sganciano per circa un minuto; " +
     "dopo ogni cambio aspetta che tornino tutte, misura per qualche minuto e confronta con prima. Tiene un canale solo se la capacità " +
     "sale di almeno il 5% senza peggiorare SNR e cliente più debole; altrimenti, o se una CPE non torna entro 5 minuti, rimette il " +
     "canale iniziale e avvisa gli admin. Circa 10 minuti per prova."
@@ -111,7 +111,7 @@ private fun n(v: Double?) = when {
 }
 
 /**
- * IA-AP (admins): AP and CPE problems found every hour from UISP (stations, a week of statistics,
+ * Assistente rete (admins): AP and CPE problems found every hour from UISP (stations, a week of statistics,
  * the spectrum measured by APs and CPEs) and the coverage model, with what to do. The NOC gets a
  * notification for new critical problems.
  */
@@ -179,7 +179,7 @@ fun AdvisorScreen(c: AppContainer) {
         if (d == null && busy) SkeletonRows(3)
         ListHeader(
             when {
-                d == null -> "IA-AP"
+                d == null -> "Assistente rete"
                 open.isEmpty() -> "Nessun problema aperto"
                 else -> "${open.count { it.severity == "critico" }} critici · ${open.count { it.severity == "attenzione" }} da guardare · ${open.count { it.severity == "info" }} suggerimenti"
             },

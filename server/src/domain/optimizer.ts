@@ -1,6 +1,6 @@
 import { RULES } from './advisor.ts';
 /**
- * IA-AP automatic optimisation (pure part): the airMAX wireless configuration with another channel,
+ * Assistente rete automatic optimisation (pure part): the airMAX wireless configuration with another channel,
  * whether the CPEs can follow, the link metrics read from the AP's stations and the before/after
  * comparison that decides whether a channel is kept.
  */

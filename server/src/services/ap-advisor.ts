@@ -148,7 +148,7 @@ export function createAdvisor(ctx: AppContext, log?: (m: string) => void) {
       const since: Record<string, string> = {};
       for (const f of findings) since[f.id] = prev.since[f.id] ?? now;
       write(KEY, { at: now, findings, since } satisfies Stored);
-      // the IA-AP pages open in the admins' consoles show the new analysis
+      // the Assistente rete pages open in the admins' consoles show the new analysis
       ctx.live?.publish('advisor', 'admins');
       // the NOC hears about the critical findings it was not told about in the last week (a finding
       // that disappears for an hour and comes back is not news), never about the dismissed ones
@@ -166,8 +166,8 @@ export function createAdvisor(ctx: AppContext, log?: (m: string) => void) {
       if (fresh.length && prev.at && known) {
         ctx.notify.inbox.push('noc', {
           kind: 'network_advice',
-          title: `🛠️ IA-AP: ${fresh.length} ${fresh.length === 1 ? 'nuovo problema critico' : 'nuovi problemi critici'}`,
-          lines: fresh.slice(0, 6).map((f) => `${f.apName}${f.cpe ? ` · ${f.cpe.name}` : ''}: ${f.title}`).concat(fresh.length > 6 ? [`…e altri ${fresh.length - 6}: vedi IA-AP nella console.`] : []),
+          title: `🛠️ Assistente rete: ${fresh.length} ${fresh.length === 1 ? 'nuovo problema critico' : 'nuovi problemi critici'}`,
+          lines: fresh.slice(0, 6).map((f) => `${f.apName}${f.cpe ? ` · ${f.cpe.name}` : ''}: ${f.title}`).concat(fresh.length > 6 ? [`…e altri ${fresh.length - 6}: vedi Assistente rete nella console.`] : []),
         });
       }
     } catch (err) {

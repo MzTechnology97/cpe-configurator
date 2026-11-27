@@ -15,7 +15,7 @@ export const NOTIFY_KINDS = {
   work_order_late: { label: 'Intervento in ritardo o non fatto', audience: 'installer', telegram: true },
   work_order_noc: { label: 'Interventi in ritardo o non fatti (NOC)', audience: 'noc', telegram: true },
   network_advice: { label: 'Assistente rete: nuovi problemi critici su AP e CPE', audience: 'noc', telegram: false },
-  network_optimizer: { label: 'IA-AP: esito delle ottimizzazioni automatiche degli AP (canale tenuto o ripristinato)', audience: 'noc', telegram: true },
+  network_optimizer: { label: 'Assistente rete: esito delle ottimizzazioni automatiche degli AP (canale tenuto o ripristinato)', audience: 'noc', telegram: true },
   screenshot_attempt: { label: 'Tentativi di screenshot nell’app da account che non possono farli', audience: 'noc', telegram: true },
   stock_mismatch: { label: 'CPE installata che non risulta nel magazzino dell’installatore', audience: 'noc', telegram: false },
   stock_low: { label: 'Magazzino di un installatore sotto il minimo di CPE', audience: 'noc', telegram: true },
@@ -24,7 +24,7 @@ export const NOTIFY_KINDS = {
   ott: { label: 'Servizi OTT e CDN: un servizio irraggiungibile o lento dalla nostra rete, guasti dichiarati, molti servizi giù insieme', audience: 'noc', telegram: true },
   threats: { label: 'Minacce: nostri domini, IP, email o fornitori trovati su ransomware.live', audience: 'noc', telegram: true },
   albo: { label: 'Albo e permessi: atti su reti e bandi nei comuni scelti (scavi, antenne, telecomunicazioni, connettività)', audience: 'noc', telegram: true },
-  ai_permission: { label: 'Assistente AI: un’AI su un tuo PC chiede il permesso per un comando (mai il comando nel messaggio)', audience: 'noc', telegram: true },
+  ai_permission: { label: 'Approvazioni dei PC: un assistente su un tuo PC chiede il permesso per un comando (mai il comando nel messaggio)', audience: 'noc', telegram: true },
   proactive: { label: 'Avvisi proattivi: segnale delle CPE in calo, AP vicini alla saturazione, POP a batteria', audience: 'noc', telegram: true },
 } as const;
 export type NotifyKind = keyof typeof NOTIFY_KINDS;

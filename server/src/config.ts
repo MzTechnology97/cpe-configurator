@@ -141,9 +141,9 @@ const envSchema = z.object({
   OPENCELLID_NETS: z.string().max(400).default('88:WindTre,99:WindTre'),
   /** Il riquadro da tenere: sud,ovest,nord,est (di default la Sicilia). */
   OPENCELLID_BBOX: z.string().max(80).default('36.5,12.0,38.4,15.8'),
-  /** «Conoscenza AI» (modulo ai_memory): token GitHub fine-grained in SOLA LETTURA (Contents: read) su un solo repository privato. */
+  /** «Memorie di lavoro» (modulo ai_memory): token GitHub fine-grained in SOLA LETTURA (Contents: read) su un solo repository privato. */
   AI_HUB_TOKEN: optionalText(300),
-  AI_HUB_REPO: z.string().regex(/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/).default('cdanet-as200034/cdanet-as200034-continuity-hardened'),
+  AI_HUB_REPO: z.string().regex(/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/).default('CDA-System-S-R-L/cdanet-as200034-continuity-hardened'),
   AI_HUB_REF: z.string().regex(/^[A-Za-z0-9_./-]{1,100}$/).default('main'),
   AI_HUB_API: z.string().url().default('https://api.github.com'),
 
@@ -244,7 +244,7 @@ export interface Config {
   coverageHideBelowDbm: number;
   /** Assistente rete: frequencies the channel suggestions may use, "from-to" MHz. */
   advisorFreqRange: string;
-  /** IA-AP: admins may start the automatic channel optimisation of an AP through UISP. */
+  /** Assistente rete: admins may start the automatic channel optimisation of an AP through UISP. */
   advisorAutoOptimize: boolean;
   coverageBuildingM: number;
   /** Average height of the trees (land cover "tree cover"), m. */
@@ -262,7 +262,7 @@ export interface Config {
   crmSyncMinutes: number;
   ransomwareLive: { apiKey: string | undefined; url: string };
   openCellId: { token: string | undefined; url: string; nets: string; bbox: string };
-  /** «Conoscenza AI»: where the shared memories of the AIs are read (private repository, read-only token). */
+  /** «Memorie di lavoro»: where the shared memories of the AIs are read (private repository, read-only token). */
   aiHub: { token: string | undefined; repo: string; ref: string; api: string };
   routerOsAllowPublic: boolean;
   /** Android app always on the latest release: older apps get 426 on every call. */

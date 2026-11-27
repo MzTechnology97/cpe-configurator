@@ -31,7 +31,7 @@ const request = z
   .strict();
 
 /**
- * «Assistente AI» (module ai_assistant, off by default). Two sides:
+ * «Approvazioni dei PC» (module ai_assistant, off by default). Two sides:
  * - /api/ai-agent/*: the agent next to Continuity on a PC, with its own token (cdaagt_…), no user session;
  * - /api/admin/ai/*: the admins (second step on). Creating an agent and allowing a request need a fresh code.
  */
@@ -120,7 +120,7 @@ export function aiAssistantRoutes(app: FastifyInstance, ctx: AppContext) {
     const u = codes.check(req.user!.id, b.code);
     const created = ai.createAgent({ userId: u.id, tokenVersion: u.token_version, name: b.name, days: b.days, ip: req.ip });
     recordEvent(db, u.id, 'ai.agent.create', String(created.id), `agente «${created.name}», scade ${created.expiresAt.slice(0, 10)}`);
-    ctx.notify.security(`Nuovo agente «Assistente AI» «${escapeHtml(created.name)}» creato da <b>${escapeHtml(u.username)}</b>, scade il ${created.expiresAt.slice(0, 10)}.`);
+    ctx.notify.security(`Nuovo agente per le «Approvazioni dei PC» «${escapeHtml(created.name)}» creato da <b>${escapeHtml(u.username)}</b>, scade il ${created.expiresAt.slice(0, 10)}.`);
     return created;
   });
 

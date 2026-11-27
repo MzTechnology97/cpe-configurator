@@ -24,7 +24,7 @@ class AlboTest {
         assertFalse("off by default: unknown means off", "Albo" in networkTabTitles(emptyMap(), admin = true))
         assertFalse("Albo" in networkTabTitles(mapOf("albo" to false), admin = true))
         assertFalse("Albo" in networkTabTitles(mapOf("albo" to true), admin = false))
-        assertEquals(listOf("Stato", "IA-AP", "Albo", "Guasti", "Aree e avvisi", "AP vicini"), networkTabTitles(mapOf("albo" to true), admin = true))
+        assertEquals(listOf("Stato", "Assistente rete", "Albo", "Guasti", "Aree e avvisi", "AP vicini"), networkTabTitles(mapOf("albo" to true), admin = true))
     }
 
     @Test

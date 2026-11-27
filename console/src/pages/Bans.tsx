@@ -7,7 +7,7 @@ import { AsyncButton, Badge, Button, Card, EmptyState, Notice, PageHeader, Segme
 /**
  * «Accessi bloccati» (admins): the bans of the login guard (fail2ban style: too many failed logins
  * from an address or a device), with what was tried and the unban, and the log of the login
- * attempts of the web console, the app and the Claude connections, filtered by address or user;
+ * attempts of the web console, the app and the MCP connections, filtered by address or user;
  * CrowdSec: the attacks recognised on this server and the community blocklist, with the exceptions.
  */
 
@@ -31,13 +31,13 @@ interface Attempt {
   ip: string;
   device: string | null;
   username: string;
-  channel: 'web' | 'app' | 'claude';
+  channel: 'web' | 'app' | 'mcp';
   kind: 'password' | 'totp' | 'quick' | 'oauth';
   ok: boolean;
   reason: string;
 }
-const CHANNEL: Record<string, string> = { web: 'console', app: 'app', claude: 'Claude' };
-const KIND: Record<string, string> = { password: 'password', totp: 'codice di verifica', quick: 'accesso rapido', oauth: 'consenso Claude' };
+const CHANNEL: Record<string, string> = { web: 'console', app: 'app', mcp: 'connettore MCP' };
+const KIND: Record<string, string> = { password: 'password', totp: 'codice di verifica', quick: 'accesso rapido', oauth: 'consenso MCP' };
 const date = (iso?: string | null) => (iso ? new Date(iso).toLocaleString('it-IT', { dateStyle: 'short', timeStyle: 'short' }) : '—');
 const short = (dev: string | null) => (dev ? `${dev.slice(0, 8)}…` : '—');
 const fail = (e: unknown) => toast((e as Error).message, 'bad');
@@ -110,7 +110,7 @@ export function Bans() {
             <EmptyState title={show === 'active' ? 'Nessun blocco in corso' : 'Nessun blocco'}>Un indirizzo o un dispositivo viene bloccato dopo 5 accessi non riusciti in 15 minuti.</EmptyState>
           ))}
         <ul className="ui-muted ui-small bn-rules">
-          <li>5 accessi non riusciti in 15 minuti (password, codice di verifica, accesso rapido, consenso di Claude): blocco di 30 minuti; di nuovo entro 24 ore: 24 ore. Ogni blocco arriva come avviso di sicurezza al NOC.</li>
+          <li>5 accessi non riusciti in 15 minuti (password, codice di verifica, accesso rapido, consenso del connettore MCP): blocco di 30 minuti; di nuovo entro 24 ore: 24 ore. Ogni blocco arriva come avviso di sicurezza al NOC.</li>
           <li>Il blocco di un indirizzo ferma solo gli accessi e le richieste senza sessione: chi è già collegato dallo stesso indirizzo (stessa rete del gestore mobile, stesso ufficio) continua a lavorare.</li>
           <li>Le reti interne e quelle fidate del server non vengono mai bloccate per indirizzo: lì vale il limite di 10 tentativi per utente.</li>
           <li>
